@@ -3,9 +3,62 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Mobil uyumluluk için viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    
     <title>btk-demo</title>
+    
+    <!-- Temel responsive CSS reset ve container ayarı -->
+    <style>
+      /* Genel reset */
+      *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Ana container */
+      #root {
+        width: 100%;
+        max-width: 1200px; /* Masaüstü için sınır */
+        margin: 0 auto;
+        padding: 0 1rem; /* Mobilde kenarlarda boşluk */
+      }
+
+      /* Responsive grid örneği */
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        margin: -0.5rem;
+      }
+
+      .col {
+        padding: 0.5rem;
+        flex: 1 1 100%; /* Mobilde tam genişlik */
+      }
+
+      @media (min-width: 768px) {
+        .col {
+          flex: 1; /* Masaüstünde eşit kolonlar */
+        }
+      }
+
+      img {
+        max-width: 100%;
+        height: auto;
+      }
+    </style>
   </head>
+
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
