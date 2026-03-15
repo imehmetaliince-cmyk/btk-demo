@@ -14,10 +14,10 @@ const C = {
   text: "#0f172a",
   textSec: "#475569",
   textMuted: "#94a3b8",
-  r1c: "#b91c1c", r1bg: "#fef2f2", r1br: "#fecaca",  // Yüksek
-  r2c: "#c2410c", r2bg: "#fff7ed", r2br: "#fed7aa",  // Orta-Yüksek
-  r3c: "#b45309", r3bg: "#fffbeb", r3br: "#fde68a",  // Orta
-  r4c: "#15803d", r4bg: "#f0fdf4", r4br: "#bbf7d0",  // Düşük
+  r1c: "#b91c1c", r1bg: "#fef2f2", r1br: "#fecaca",
+  r2c: "#c2410c", r2bg: "#fff7ed", r2br: "#fed7aa",
+  r3c: "#b45309", r3bg: "#fffbeb", r3br: "#fde68a",
+  r4c: "#15803d", r4bg: "#f0fdf4", r4br: "#bbf7d0",
 };
 
 function getRisk(s) {
@@ -45,7 +45,6 @@ function getPriority(idx, score) {
 }
 
 // ─── HARİTA: koordinat dönüşümü ──────────────────────────────────────────────
-// Türkiye: lon 25.5–46.0, lat 35.5–42.5 → viewBox 0 0 1020 480
 const VW = 1020, VH = 480;
 const LON0 = 25.5, LOND = 20.5;
 const LAT0 = 42.5, LATD = 7.0;
@@ -130,13 +129,245 @@ function ScoreModal({ onClose }) {
   );
 }
 
+// ─── MODAL: HERO STAT DETAYLARI ──────────────────────────────────────────────
+function HeroModal({ type, stats, onClose }) {
+  if (!type) return null;
+
+  const highRiskProfs  = PROFESSIONS.filter(p => p.score >= 65).sort((a,b) => b.score - a.score);
+  const workforceProfs = PROFESSIONS.filter(p => p.score >= 50).sort((a,b) => b.score - a.score);
+
+  // Sektör bazlı işgücü özeti
+  const sectorMap = {};
+  workforceProfs.forEach(p => {
+    if (!sectorMap[p.sector]) sectorMap[p.sector] = { workers:0, count:0, maxScore:0 };
+    sectorMap[p.sector].workers  += p.workers;
+    sectorMap[p.sector].count    += 1;
+    sectorMap[p.sector].maxScore  = Math.max(sectorMap[p.sector].maxScore, p.score);
+  });
+  const sectors = Object.entries(sectorMap)
+    .map(([name, d]) => ({ name, ...d }))
+    .sort((a,b) => b.workers - a.workers)
+    .slice(0, 8);
+
+  const fmtW = w => w >= 1000000 ? (w/1000000).toFixed(1)+"M" : (w/1000).toFixed(0)+"K";
+
+  const titles = {
+    workforce: "Yüksek Risk İşgücü — Kimler Etkileniyor?",
+    critical:  "Kritik Meslekler — %65 Üzeri Maruziyet",
+    avg:       "Ortalama Skor Nasıl Hesaplandı?",
+  };
+  const subtitles = {
+    workforce: `Türkiye'de ${fmtW(stats.atRisk)} çalışan AI dönüşümünün yoğun baskısı altında`,
+    critical:  `${highRiskProfs.length} meslek grubunda görevlerin büyük çoğunluğu AI tarafından üstleniliyor`,
+    avg:       `${PROFESSIONS.length} mesleğin gözlemlenen maruziyet skorlarının ağırlıksız ortalaması`,
+  };
+
+  return (
+    <div onClick={onClose} style={{
+      position:"fixed", inset:0, background:"rgba(15,35,66,0.6)", zIndex:2000,
+      display:"flex", alignItems:"center", justifyContent:"center", padding:20
+    }}>
+      <div onClick={e=>e.stopPropagation()} style={{
+        background:C.surface, borderRadius:14, border:`1px solid ${C.border}`,
+        width:"100%", maxWidth: type === "critical" ? 780 : 660,
+        maxHeight:"90vh", overflowY:"auto",
+        boxShadow:"0 28px 80px rgba(0,0,0,0.22)"
+      }}>
+        {/* Başlık */}
+        <div style={{ padding:"22px 26px", borderBottom:`1px solid ${C.border}`, display:"flex", justifyContent:"space-between", alignItems:"flex-start", background:"#0f2342", borderRadius:"14px 14px 0 0" }}>
+          <div>
+            <h2 style={{ fontSize:17, fontWeight:800, color:"white", marginBottom:4 }}>{titles[type]}</h2>
+            <p style={{ fontSize:12, color:"#93c5fd", margin:0 }}>{subtitles[type]}</p>
+          </div>
+          <button onClick={onClose} style={{
+            background:"rgba(255,255,255,0.1)", border:"1px solid rgba(255,255,255,0.2)",
+            borderRadius:6, width:32, height:32, cursor:"pointer", fontSize:18, color:"white", lineHeight:1
+          }}>×</button>
+        </div>
+
+        <div style={{ padding:"24px 26px" }}>
+
+          {/* ── WORKFORCE ── */}
+          {type === "workforce" && (
+            <>
+              {/* Özet kartları */}
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:10, marginBottom:22 }}>
+                {[
+                  { val: fmtW(stats.atRisk), label:"Toplam Riskli İşgücü", desc:"Maruziyet skoru %50+", c:"#b91c1c", bg:"#fef2f2", br:"#fecaca" },
+                  { val: fmtW(PROFESSIONS.filter(p=>p.score>=65).reduce((s,p)=>s+p.workers,0)), label:"Kritik Risk İşgücü", desc:"Maruziyet skoru %65+", c:"#c2410c", bg:"#fff7ed", br:"#fed7aa" },
+                  { val: PROFESSIONS.filter(p=>p.score>=50).length+"", label:"Etkilenen Meslek", desc:`${PROFESSIONS.length} mesleğin ${Math.round(PROFESSIONS.filter(p=>p.score>=50).length/PROFESSIONS.length*100)}%'i`, c:"#b45309", bg:"#fffbeb", br:"#fde68a" },
+                ].map(s => (
+                  <div key={s.label} style={{ background:s.bg, border:`1px solid ${s.br}`, borderRadius:10, padding:"14px 16px" }}>
+                    <div style={{ fontSize:24, fontWeight:900, color:s.c, fontFamily:"monospace", lineHeight:1 }}>{s.val}</div>
+                    <div style={{ fontSize:12, fontWeight:700, color:s.c, marginTop:5 }}>{s.label}</div>
+                    <div style={{ fontSize:10, color:C.textMuted, marginTop:2 }}>{s.desc}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Sektör dağılımı */}
+              <div style={{ marginBottom:20 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:C.textMuted, letterSpacing:1, marginBottom:10 }}>SEKTÖR BAZINDA ETKİLENEN İŞGÜCÜ (İLK 8)</div>
+                <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                  {sectors.map(s => {
+                    const col = s.maxScore >= 65 ? { c:C.r1c, bg:C.r1bg, br:C.r1br } : { c:C.r2c, bg:C.r2bg, br:C.r2br };
+                    const pct = Math.round(s.workers / stats.atRisk * 100);
+                    return (
+                      <div key={s.name} style={{ background:C.bg, border:`1px solid ${C.border}`, borderRadius:8, padding:"10px 14px" }}>
+                        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:5 }}>
+                          <div>
+                            <span style={{ fontSize:13, fontWeight:600, color:C.text }}>{s.name}</span>
+                            <span style={{ fontSize:10, color:C.textMuted, marginLeft:8 }}>{s.count} meslek</span>
+                          </div>
+                          <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+                            <span style={{ fontSize:10, fontWeight:700, color:col.c, background:col.bg, border:`1px solid ${col.br}`, borderRadius:3, padding:"2px 6px" }}>max %{s.maxScore}</span>
+                            <span style={{ fontSize:13, fontWeight:800, color:C.text, fontFamily:"monospace" }}>{fmtW(s.workers)}</span>
+                          </div>
+                        </div>
+                        <div style={{ height:5, background:C.border, borderRadius:3, overflow:"hidden" }}>
+                          <div style={{ height:"100%", width:`${pct}%`, background:col.c, borderRadius:3 }}/>
+                        </div>
+                        <div style={{ fontSize:10, color:C.textMuted, marginTop:3 }}>Toplam riskli işgücünün %{pct}'i</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* En yüksek riskli 5 meslek */}
+              <div style={{ background:C.r1bg, border:`1px solid ${C.r1br}`, borderRadius:10, padding:"14px 16px" }}>
+                <div style={{ fontSize:11, fontWeight:700, color:C.r1c, letterSpacing:1, marginBottom:10 }}>EN YÜKSEK MARUZIYET — İLK 5 MESLEK</div>
+                <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                  {workforceProfs.slice(0,5).map(p => (
+                    <div key={p.id} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", background:"rgba(255,255,255,0.6)", borderRadius:6, padding:"8px 12px" }}>
+                      <div>
+                        <div style={{ fontSize:13, fontWeight:600, color:C.text }}>{p.title}</div>
+                        <div style={{ fontSize:10, color:C.textMuted }}>{p.sector} · {fmtW(p.workers)} çalışan</div>
+                      </div>
+                      <div style={{ fontSize:16, fontWeight:900, color:C.r1c, fontFamily:"monospace" }}>%{p.score}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ── CRITICAL ── */}
+          {type === "critical" && (
+            <>
+              <div style={{ background:C.r1bg, border:`1px solid ${C.r1br}`, borderRadius:10, padding:"12px 16px", marginBottom:18 }}>
+                <p style={{ fontSize:13, color:C.r1c, lineHeight:1.7, margin:0 }}>
+                  <strong>%65 eşiği:</strong> Bu grupta görevlerin büyük çoğunluğu Claude API verilerine göre AI tarafından aktif olarak üstleniliyor. Rutin bilişsel görevler büyük ölçüde otomasyona geçmiş durumda.
+                </p>
+              </div>
+
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(2, 1fr)", gap:7 }}>
+                {highRiskProfs.map(p => (
+                  <div key={p.id} style={{
+                    background:C.surface, border:`1px solid ${C.r1br}`,
+                    borderLeft:`3px solid ${C.r1c}`, borderRadius:8,
+                    padding:"10px 13px", display:"flex", justifyContent:"space-between", alignItems:"center"
+                  }}>
+                    <div style={{ flex:1, minWidth:0, marginRight:10 }}>
+                      <div style={{ fontSize:12, fontWeight:700, color:C.text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.title}</div>
+                      <div style={{ fontSize:10, color:C.textMuted, marginTop:2 }}>{p.sector}</div>
+                      {/* Skor çubuğu */}
+                      <div style={{ height:3, background:C.bg, borderRadius:2, marginTop:5, overflow:"hidden" }}>
+                        <div style={{ height:"100%", width:`${p.score}%`, background:C.r1c, borderRadius:2 }}/>
+                      </div>
+                    </div>
+                    <div style={{ textAlign:"right", flexShrink:0 }}>
+                      <div style={{ fontSize:16, fontWeight:900, color:C.r1c, fontFamily:"monospace" }}>%{p.score}</div>
+                      <div style={{ fontSize:9, color:C.textMuted }}>Teo: %{p.theoretical}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {highRiskProfs.length === 0 && (
+                <div style={{ textAlign:"center", color:C.textMuted, padding:40 }}>Kritik meslek bulunamadı.</div>
+              )}
+
+              <div style={{ marginTop:16, background:C.bg, border:`1px solid ${C.border}`, borderRadius:8, padding:"12px 14px" }}>
+                <p style={{ fontSize:12, color:C.textSec, lineHeight:1.7, margin:0 }}>
+                  <strong>Not:</strong> Bu mesleklerde yetkinlik dönüşümü artık isteğe bağlı değil, zorunluluktur. BTK Akademi eğitimleri bu gruba en acil şekilde ulaşmalıdır.
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* ── AVG ── */}
+          {type === "avg" && (
+            <>
+              {/* Formül */}
+              <div style={{ background:"#0f2342", borderRadius:10, padding:"18px 20px", marginBottom:22, textAlign:"center" }}>
+                <div style={{ fontSize:11, color:"#93c5fd", letterSpacing:1, marginBottom:8 }}>HESAPLAMA FORMÜLÜ</div>
+                <div style={{ fontSize:20, fontWeight:900, color:"white", fontFamily:"monospace", letterSpacing:2 }}>
+                  Σ(skorlar) ÷ {PROFESSIONS.length}
+                </div>
+                <div style={{ fontSize:13, color:"#94a3b8", marginTop:8 }}>
+                  = {PROFESSIONS.reduce((s,p)=>s+p.score,0).toFixed(1)} ÷ {PROFESSIONS.length} = <span style={{ color:"#fbbf24", fontWeight:800 }}>%{stats.avg}</span>
+                </div>
+              </div>
+
+              {/* Dağılım */}
+              <div style={{ marginBottom:20 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:C.textMuted, letterSpacing:1, marginBottom:12 }}>SKOR DAĞILIMI</div>
+                {[
+                  { label:"Yüksek (%65+)",      count: PROFESSIONS.filter(p=>p.score>=65).length,   c:C.r1c, bg:C.r1bg, br:C.r1br },
+                  { label:"Orta-Yüksek (%45–64)",count: PROFESSIONS.filter(p=>p.score>=45&&p.score<65).length, c:C.r2c, bg:C.r2bg, br:C.r2br },
+                  { label:"Orta (%25–44)",        count: PROFESSIONS.filter(p=>p.score>=25&&p.score<45).length, c:C.r3c, bg:C.r3bg, br:C.r3br },
+                  { label:"Düşük (%25 altı)",     count: PROFESSIONS.filter(p=>p.score<25).length,   c:C.r4c, bg:C.r4bg, br:C.r4br },
+                ].map(row => {
+                  const pct = Math.round(row.count / PROFESSIONS.length * 100);
+                  return (
+                    <div key={row.label} style={{ marginBottom:10 }}>
+                      <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, marginBottom:4 }}>
+                        <span style={{ color:row.c, fontWeight:600 }}>{row.label}</span>
+                        <span style={{ fontFamily:"monospace", color:C.text, fontWeight:700 }}>{row.count} meslek &nbsp;(%{pct})</span>
+                      </div>
+                      <div style={{ height:8, background:C.bg, border:`1px solid ${C.border}`, borderRadius:4, overflow:"hidden" }}>
+                        <div style={{ height:"100%", width:`${pct}%`, background:row.c, borderRadius:4 }}/>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* İstatistikler */}
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:10, marginBottom:18 }}>
+                {[
+                  { label:"En Yüksek", val:"%"+Math.max(...PROFESSIONS.map(p=>p.score)), name: PROFESSIONS.reduce((a,b)=>a.score>b.score?a:b).title },
+                  { label:"Medyan",    val:"%"+[...PROFESSIONS].sort((a,b)=>a.score-b.score)[Math.floor(PROFESSIONS.length/2)].score, name:"Orta değer meslek" },
+                  { label:"En Düşük", val:"%"+Math.min(...PROFESSIONS.map(p=>p.score)), name: PROFESSIONS.reduce((a,b)=>a.score<b.score?a:b).title },
+                ].map(s => (
+                  <div key={s.label} style={{ background:C.bg, border:`1px solid ${C.border}`, borderRadius:8, padding:"12px 14px" }}>
+                    <div style={{ fontSize:18, fontWeight:900, color:C.text, fontFamily:"monospace" }}>{s.val}</div>
+                    <div style={{ fontSize:11, fontWeight:700, color:C.textSec, marginTop:4 }}>{s.label}</div>
+                    <div style={{ fontSize:10, color:C.textMuted, marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{s.name}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ background:C.accentLight, border:"1px solid #bfdbfe", borderRadius:8, padding:"12px 14px" }}>
+                <p style={{ fontSize:12, color:"#1e40af", lineHeight:1.7, margin:0 }}>
+                  <strong>Yorum:</strong> %{stats.avg} ortalama, Türkiye işgücünün genel olarak <strong>orta düzey</strong> AI maruziyeti altında olduğunu gösteriyor. Ancak bu ortalama; %2 ile %74.5 arasındaki geniş dağılımı gizliyor — politika üretiminde sektör bazlı hedefleme kritik önem taşıyor.
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── TÜRKİYE HARİTASI ────────────────────────────────────────────────────────
 function TurkeyMap({ onModalOpen }) {
   const [hovered, setHovered] = useState(null);
 
   return (
     <div>
-      {/* Açıklama */}
       <div style={{ display:"flex", gap:16, flexWrap:"wrap", alignItems:"center", marginBottom:14 }}>
         <span style={{ fontSize:12, color:C.textMuted, fontWeight:600 }}>Maruziyet Seviyesi:</span>
         {[
@@ -152,21 +383,15 @@ function TurkeyMap({ onModalOpen }) {
         ))}
       </div>
 
-      {/* SVG Harita */}
       <div style={{ position:"relative", background:"#e0ecfb", borderRadius:12, border:`1px solid ${C.border}`, overflow:"hidden" }}>
         <svg viewBox={`0 0 ${VW} ${VH}`} style={{ width:"100%", display:"block" }}>
-          {/* Deniz arka planı */}
           <rect width={VW} height={VH} fill="#dbeafe"/>
-
-          {/* Izgara */}
           <defs>
             <pattern id="mapgrid" width="50" height="50" patternUnits="userSpaceOnUse">
               <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#bfdbfe" strokeWidth="0.5"/>
             </pattern>
           </defs>
           <rect width={VW} height={VH} fill="url(#mapgrid)"/>
-
-          {/* İl dikdörtgenleri */}
           {PROVINCES.map(p => {
             const col = getMapColor(p.score);
             const x1 = tx(p.bounds[0]);
@@ -180,23 +405,16 @@ function TurkeyMap({ onModalOpen }) {
                 onMouseLeave={() => setHovered(null)}
                 style={{ cursor:"pointer" }}
               >
-                <rect
-                  x={x1} y={y1} width={w} height={h}
-                  rx={2}
+                <rect x={x1} y={y1} width={w} height={h} rx={2}
                   fill={isH ? col.stroke : col.fill}
-                  stroke={col.stroke}
-                  strokeWidth={isH ? 2 : 0.8}
+                  stroke={col.stroke} strokeWidth={isH ? 2 : 0.8}
                   opacity={isH ? 0.95 : 0.82}
                   style={{ transition:"all 0.15s" }}
                 />
                 {w > 28 && h > 16 && (
-                  <text
-                    x={x1 + w/2} y={y1 + h/2 + 3.5}
-                    textAnchor="middle"
+                  <text x={x1 + w/2} y={y1 + h/2 + 3.5} textAnchor="middle"
                     fill={isH ? "white" : col.stroke}
-                    fontSize={Math.min(9, w/4)}
-                    fontWeight="700"
-                    fontFamily="monospace"
+                    fontSize={Math.min(9, w/4)} fontWeight="700" fontFamily="monospace"
                     style={{ pointerEvents:"none", userSelect:"none" }}
                   >{p.score}%</text>
                 )}
@@ -204,8 +422,6 @@ function TurkeyMap({ onModalOpen }) {
             );
           })}
         </svg>
-
-        {/* Tooltip */}
         {hovered && (
           <div style={{
             position:"absolute", top:12, right:12,
@@ -230,7 +446,6 @@ function TurkeyMap({ onModalOpen }) {
         )}
       </div>
 
-      {/* İl sıralaması */}
       <div style={{ marginTop:16 }}>
         <div style={{ fontSize:12, fontWeight:700, color:C.textMuted, letterSpacing:1, marginBottom:10 }}>EN YÜKSEK SKORA SAHİP 10 İL</div>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(180px, 1fr))", gap:7 }}>
@@ -276,20 +491,29 @@ function DetailPanel({ prof, onModalOpen }) {
   const risk = getRisk(prof.score);
   const R = 44;
   const CIRC = 2 * Math.PI * R;
+  const gap = prof.gap !== undefined ? prof.gap : +(prof.theoretical - prof.score).toFixed(1);
 
   return (
     <div>
-      {/* Başlık */}
       <div style={{ padding:"18px 22px", borderBottom:`1px solid ${C.border}`, display:"flex", gap:12, alignItems:"flex-start" }}>
         <div style={{ flex:1 }}>
           <div style={{ fontWeight:800, fontSize:17, color:C.text, marginBottom:4, lineHeight:1.3 }}>{prof.title}</div>
-          <div style={{ fontSize:11, color:C.textMuted, fontFamily:"monospace" }}>ISCO-08: {prof.isco} &nbsp;·&nbsp; {prof.sector}</div>
+          <div style={{ fontSize:11, color:C.textMuted, fontFamily:"monospace" }}>
+            ISCO-08: {prof.isco}
+            {prof.nace && <> &nbsp;·&nbsp; NACE: {prof.nace}</>}
+            &nbsp;·&nbsp; {prof.sector}
+          </div>
+          {prof.naceName && (
+            <div style={{ fontSize:10, color:"#cbd5e1", marginTop:2 }}>{prof.naceName}</div>
+          )}
+          <div style={{ fontSize:10, color:"#f59e0b", marginTop:3, fontWeight:600 }}>
+            Benimseme Açığı: %{gap} — teorik kapasite henüz tam gerçekleşmemiş
+          </div>
         </div>
         <span style={{ fontSize:10, fontWeight:700, padding:"4px 10px", borderRadius:4, background:risk.bg, color:risk.c, border:`1px solid ${risk.br}`, whiteSpace:"nowrap", marginTop:2 }}>{risk.label}</span>
       </div>
 
       <div style={{ padding:"18px 22px" }}>
-        {/* Gauge + barlar */}
         <div style={{ display:"flex", gap:18, alignItems:"center", marginBottom:16 }}>
           <div style={{ flexShrink:0 }}>
             <svg width="110" height="110" viewBox="0 0 110 110">
@@ -311,7 +535,7 @@ function DetailPanel({ prof, onModalOpen }) {
             {[
               { label:"Teorik Kapasite",  val:prof.theoretical, color:C.textSec },
               { label:"Gerçek Kullanım",  val:prof.score,       color:risk.c },
-              { label:"Benimseme Açığı",  val:+(prof.theoretical - prof.score).toFixed(1), color:C.textMuted },
+              { label:"Benimseme Açığı",  val:gap,              color:"#f59e0b" },
             ].map(b => (
               <div key={b.label} style={{ marginBottom:10 }}>
                 <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, marginBottom:3 }}>
@@ -326,7 +550,6 @@ function DetailPanel({ prof, onModalOpen }) {
           </div>
         </div>
 
-        {/* İstatistikler */}
         <div style={{ display:"flex", gap:8, marginBottom:14 }}>
           {[
             { label:"Türkiye İşgücü", val: prof.workers>=1000000 ? (prof.workers/1000000).toFixed(1)+"M" : (prof.workers/1000).toFixed(0)+"K" },
@@ -339,13 +562,11 @@ function DetailPanel({ prof, onModalOpen }) {
           ))}
         </div>
 
-        {/* Etki analizi */}
         <div style={{ background:C.bg, border:`1px solid ${C.border}`, borderRadius:8, padding:14, marginBottom:14 }}>
           <div style={{ fontSize:10, fontWeight:700, color:C.textMuted, letterSpacing:1, marginBottom:6 }}>SEKTÖR ETKİSİ</div>
           <p style={{ fontSize:12, color:C.textSec, lineHeight:1.75, margin:0 }}>{prof.impact}</p>
         </div>
 
-        {/* Kurslar */}
         <div style={{ fontSize:10, fontWeight:700, color:C.textMuted, letterSpacing:1, marginBottom:8 }}>BTK AKADEMİ — ÖNERİLEN KURSLAR</div>
         <div style={{ display:"flex", flexDirection:"column", gap:7 }}>
           {prof.courses.map((c, i) => {
@@ -369,7 +590,7 @@ function MethodSection({ onModalOpen }) {
     <div style={{ maxWidth:700 }}>
       <h2 style={{ fontSize:20, fontWeight:800, color:C.text, marginBottom:6 }}>Analiz Metodolojisi</h2>
       <p style={{ fontSize:14, color:C.textSec, lineHeight:1.75, marginBottom:28 }}>
-        Platformdaki maruziyet skorları Anthropic'in Mart 2026 tarihli işgücü araştırmasından türetilmiş ve Türkiye ISCO-08 kodlarıyla eşleştirilmiştir.{" "}
+        Platformdaki maruziyet skorları Anthropic'in Mart 2026 tarihli işgücü araştırmasından türetilmiş ve Türkiye ISCO-08 + NACE Rev.2 kodlarıyla eşleştirilmiştir.{" "}
         <button onClick={onModalOpen} style={{ fontSize:13, color:C.accent, background:"none", border:"none", cursor:"pointer", textDecoration:"underline", padding:0 }}>
           Skor hesaplama yöntemi için tıklayın
         </button>
@@ -378,8 +599,8 @@ function MethodSection({ onModalOpen }) {
         {[
           { n:"01", color:"#1d4ed8", title:"Anthropic Economic Index",
             body:"Massenkoff & McCrory (2026) tarafından geliştirilen 'Observed Exposure' metriği, Claude API'nin gerçek dünya kullanım verilerinden türetiliyor. 800'den fazla meslek için teorik AI kapasitesi ve fiilen gözlemlenen otomasyon oranı tek çatı altında ölçüldü." },
-          { n:"02", color:"#7c3aed", title:"ISCO-TR Eşleştirmesi",
-            body:"O*NET meslek kodları, Türkiye'nin kullandığı ISCO-08 standardıyla eşleştirildi. Bu eşleştirme Core9Tech araştırma ekibi tarafından manuel doğrulama sürecinden geçirildi." },
+          { n:"02", color:"#7c3aed", title:"NACE Rev.2 + ISCO-08 Çift Standart Eşleştirmesi",
+            body:"O*NET meslek kodları Türkiye'nin NACE Rev.2 (işyeri faaliyet) ve ISCO-08 (bireysel meslek) standartlarıyla çapraz eşleştirildi. Her meslek hem ISCO hem NACE kodu taşır — SGK, İŞKUR ve KOSGEB veri tabanlarıyla doğrudan sorgulanabilir. Core9Tech ekibi tarafından manuel doğrulandı." },
           { n:"03", color:"#0891b2", title:"Türkiye İşgücü Ağırlıklandırması",
             body:"Her meslek grubunun çalışan sayısı TÜİK Hanehalkı İşgücü Araştırması (2024) ile ağırlıklandırıldı. İl bazlı risk skoru baskın sektör ağırlıklı ortalama yöntemiyle hesaplandı." },
           { n:"04", color:"#059669", title:"BTK Akademi Kurs Eşleştirmesi",
@@ -402,6 +623,7 @@ function MethodSection({ onModalOpen }) {
             "Anthropic Economic Index. huggingface.co/datasets/Anthropic/EconomicIndex",
             "TÜİK Hanehalkı İşgücü Araştırması (2024). Türkiye İstatistik Kurumu.",
             "ISCO-08 Uluslararası Meslek Standart Sınıflaması. ILO / TÜİK Uyarlaması.",
+            "NACE Rev.2 Ekonomik Faaliyet Sınıflaması. EUROSTAT / TÜİK.",
             "BLS Employment Projections 2024–2034. U.S. Bureau of Labor Statistics.",
           ].map((r,i) => (
             <div key={i} style={{ fontSize:12, color:C.textSec, lineHeight:1.6, paddingLeft:12, borderLeft:`2px solid ${C.border}` }}>{r}</div>
@@ -414,11 +636,12 @@ function MethodSection({ onModalOpen }) {
 
 // ─── ANA UYGULAMA ─────────────────────────────────────────────────────────────
 export default function App() {
-  const [tab, setTab]       = useState("analysis");
-  const [search, setSearch] = useState("");
-  const [selected, setSel]  = useState(null);
-  const [sortBy, setSort]   = useState("score");
-  const [modal, setModal]   = useState(false);
+  const [tab, setTab]           = useState("analysis");
+  const [search, setSearch]     = useState("");
+  const [selected, setSel]      = useState(null);
+  const [sortBy, setSort]       = useState("score");
+  const [modal, setModal]       = useState(false);
+  const [heroModal, setHeroModal] = useState(null); // 'workforce' | 'critical' | 'avg'
   const [sectorFilter, setSectorFilter] = useState("Tümü");
 
   const sectors = useMemo(() => {
@@ -434,17 +657,24 @@ export default function App() {
       list = list.filter(p =>
         p.title.toLowerCase().includes(q) ||
         p.sector.toLowerCase().includes(q) ||
-        p.isco.includes(q)
+        p.isco.includes(q) ||
+        (p.nace && p.nace.includes(q))
       );
     }
-    return [...list].sort((a,b) => sortBy === "score" ? b.score - a.score : a.title.localeCompare(b.title,"tr"));
+    return [...list].sort((a,b) =>
+      sortBy === "score" ? b.score - a.score :
+      sortBy === "gap"   ? (b.gap ?? b.theoretical - b.score) - (a.gap ?? a.theoretical - a.score) :
+      a.title.localeCompare(b.title, "tr")
+    );
   }, [search, sortBy, sectorFilter]);
 
   const stats = useMemo(() => ({
-    atRisk: PROFESSIONS.filter(p=>p.score>=50).reduce((s,p)=>s+p.workers,0),
+    atRisk:   PROFESSIONS.filter(p=>p.score>=50).reduce((s,p)=>s+p.workers,0),
     highRisk: PROFESSIONS.filter(p=>p.score>=65).length,
-    avg: Math.round(PROFESSIONS.reduce((s,p)=>s+p.score,0)/PROFESSIONS.length),
+    avg:      Math.round(PROFESSIONS.reduce((s,p)=>s+p.score,0)/PROFESSIONS.length),
   }), []);
+
+  const fmtW = w => w >= 1000000 ? (w/1000000).toFixed(1)+"M" : (w/1000).toFixed(0)+"K";
 
   const NAV_TABS = [
     { id:"analysis", label:"Meslek Analizi" },
@@ -452,16 +682,68 @@ export default function App() {
     { id:"method",   label:"Metodoloji" },
   ];
 
+  const heroStats = [
+    {
+      val: String(PROFESSIONS.length),
+      label: "Analiz Edilen Meslek",
+      sub:  "NACE Rev.2 + ISCO-08 kodlu",
+      accent:"white",
+      clickable: false,
+    },
+    {
+      val: "81",
+      label: "İl Bazında Veri",
+      sub:  "Tüm Türkiye illeri kapsanıyor",
+      accent:"white",
+      clickable: false,
+    },
+    {
+      val: fmtW(stats.atRisk),
+      label: "Yüksek Risk İşgücü",
+      sub:  "Türkiye aktif nüfusunda",
+      accent:"#fca5a5",
+      clickable: true,
+      onClick: () => setHeroModal("workforce"),
+      hint: "tıkla → detaylar",
+    },
+    {
+      val: String(stats.highRisk),
+      label: "Kritik Meslek",
+      sub:  "%65 üzeri maruziyet skoru",
+      accent:"#fdba74",
+      clickable: true,
+      onClick: () => setHeroModal("critical"),
+      hint: "tıkla → meslek isimleri",
+    },
+    {
+      val: `${stats.avg}%`,
+      label: "Ortalama Skor",
+      sub:  `${PROFESSIONS.length} meslek ortalaması`,
+      accent:"white",
+      clickable: true,
+      onClick: () => setHeroModal("avg"),
+      hint: "tıkla → hesaplama",
+    },
+  ];
+
   return (
     <div style={{ minHeight:"100vh", background:C.bg, color:C.text, fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" }}>
-      <style>{`*{box-sizing:border-box;margin:0;padding:0}input,button{font-family:inherit}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:${C.bg}}::-webkit-scrollbar-thumb{background:${C.borderMed};border-radius:3px}`}</style>
+      <style>{`
+        *{box-sizing:border-box;margin:0;padding:0}
+        input,button{font-family:inherit}
+        ::-webkit-scrollbar{width:5px}
+        ::-webkit-scrollbar-track{background:${C.bg}}
+        ::-webkit-scrollbar-thumb{background:${C.borderMed};border-radius:3px}
+        .hero-stat-btn:hover{background:rgba(255,255,255,0.12)!important;transform:translateY(-1px);transition:all .15s}
+        .hero-stat-btn{transition:all .15s}
+      `}</style>
 
-      {modal && <ScoreModal onClose={()=>setModal(false)}/>}
+      {modal      && <ScoreModal onClose={()=>setModal(false)}/>}
+      {heroModal  && <HeroModal type={heroModal} stats={stats} onClose={()=>setHeroModal(null)}/>}
 
       {/* ── NAV ── */}
       <nav style={{ background:C.navBg, position:"sticky", top:0, zIndex:100, borderBottom:`1px solid ${C.navBorder}` }}>
         <div style={{ maxWidth:1240, margin:"0 auto", padding:"0 24px", display:"flex", alignItems:"stretch", height:58 }}>
-          {/* Logo */}
           <div style={{ display:"flex", flexDirection:"column", justifyContent:"center", marginRight:"auto", paddingRight:24, borderRight:`1px solid ${C.navBorder}` }}>
             <div style={{ display:"flex", alignItems:"baseline", gap:8 }}>
               <span style={{ fontSize:17, fontWeight:900, color:"white", letterSpacing:-0.5 }}>TAME</span>
@@ -469,8 +751,6 @@ export default function App() {
             </div>
             <div style={{ fontSize:10, color:"#334155", letterSpacing:0.5 }}>Core9Tech × BTK Akademi · Pilot, Mart 2026</div>
           </div>
-
-          {/* Sekmeler */}
           {NAV_TABS.map(t => (
             <button key={t.id} onClick={()=>setTab(t.id)} style={{
               background:"none", border:"none",
@@ -480,8 +760,6 @@ export default function App() {
               padding:"0 18px", cursor:"pointer", transition:"all 0.15s", marginTop:2
             }}>{t.label}</button>
           ))}
-
-          {/* Kaynak */}
           <div style={{ display:"flex", flexDirection:"column", justifyContent:"center", paddingLeft:20, borderLeft:`1px solid ${C.navBorder}`, marginLeft:8 }}>
             <div style={{ fontSize:10, color:"#334155" }}>Kaynak</div>
             <div style={{ fontSize:10, color:"#94a3b8", fontWeight:600 }}>Anthropic Economic Index</div>
@@ -499,21 +777,34 @@ export default function App() {
             Türkiye'de Hangi Meslekler<br/>Yapay Zekadan Etkileniyor?
           </h1>
           <p style={{ color:"#94a3b8", fontSize:14, lineHeight:1.75, maxWidth:560, marginBottom:28 }}>
-            Anthropic'in Mart 2026 işgücü raporu 100 meslek ve 81 il düzeyinde Türkiye verisiyle eşleştirildi. Kanıta dayalı maruziyet skorları ve BTK Akademi kurs önerileriyle işgücü dönüşümünü inceleyin.
+            Anthropic'in Mart 2026 işgücü raporu {PROFESSIONS.length} meslek ve 81 il düzeyinde Türkiye verisiyle eşleştirildi. Kanıta dayalı maruziyet skorları ve BTK Akademi kurs önerileriyle işgücü dönüşümünü inceleyin.
           </p>
+
+          {/* Hero stat kartları */}
           <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
-            {[
-              { val:"100",  label:"Analiz Edilen Meslek",  sub:"ISCO-08 standartlarıyla",       accent:"white"   },
-              { val:"81",   label:"İl Bazında Veri",        sub:"Tüm Türkiye illeri kapsanıyor", accent:"white"   },
-              { val: stats.atRisk>=1000000 ? (stats.atRisk/1000000).toFixed(1)+"M" : (stats.atRisk/1000).toFixed(0)+"K",
-                label:"Yüksek Risk İşgücü", sub:"Türkiye aktif nüfusunda",      accent:"#fca5a5" },
-              { val:`${stats.highRisk}`,  label:"Kritik Meslek",  sub:"%65 üzeri maruziyet skoru",    accent:"#fdba74" },
-              { val:`${stats.avg}%`,      label:"Ortalama Skor",  sub:"100 meslek ortalaması",         accent:"white"   },
-            ].map(s => (
-              <div key={s.label} style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"14px 20px", minWidth:148 }}>
+            {heroStats.map(s => (
+              <div
+                key={s.label}
+                className={s.clickable ? "hero-stat-btn" : ""}
+                onClick={s.clickable ? s.onClick : undefined}
+                style={{
+                  background:"rgba(255,255,255,0.06)",
+                  border: s.clickable ? "1px solid rgba(255,255,255,0.18)" : "1px solid rgba(255,255,255,0.1)",
+                  borderRadius:10, padding:"14px 20px", minWidth:148,
+                  cursor: s.clickable ? "pointer" : "default",
+                  position:"relative",
+                }}
+              >
+                {s.clickable && (
+                  <div style={{ position:"absolute", top:6, right:8, fontSize:9, color:"rgba(255,255,255,0.35)", fontWeight:600 }}>
+                    ↗
+                  </div>
+                )}
                 <div style={{ fontSize:26, fontWeight:900, color:s.accent, fontFamily:"monospace", lineHeight:1 }}>{s.val}</div>
                 <div style={{ fontSize:12, color:"#e2e8f0", marginTop:5, fontWeight:600 }}>{s.label}</div>
-                <div style={{ fontSize:10, color:"#475569", marginTop:2 }}>{s.sub}</div>
+                <div style={{ fontSize:10, color: s.clickable ? "rgba(255,255,255,0.4)" : "#475569", marginTop:2 }}>
+                  {s.clickable ? s.hint : s.sub}
+                </div>
               </div>
             ))}
           </div>
@@ -530,7 +821,7 @@ export default function App() {
             <div>
               <div style={{ marginBottom:8 }}>
                 <input
-                  type="text" placeholder="Meslek adı, sektör veya ISCO kodu..."
+                  type="text" placeholder="Meslek adı, sektör, ISCO veya NACE kodu..."
                   value={search} onChange={e=>setSearch(e.target.value)}
                   style={{ width:"100%", background:C.surface, border:`1px solid ${C.border}`, borderRadius:8, padding:"9px 12px", fontSize:13, color:C.text }}
                 />
@@ -543,22 +834,32 @@ export default function App() {
                   {sectors.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
                 <div style={{ display:"flex", gap:4 }}>
-                  {[{v:"score",l:"Skora Göre"},{v:"name",l:"A–Z"}].map(b => (
+                  {[
+                    { v:"score", l:"Skora Göre"       },
+                    { v:"gap",   l:"Benimseme Açığı"  },
+                    { v:"name",  l:"A–Z"               },
+                  ].map(b => (
                     <button key={b.v} onClick={()=>setSort(b.v)} style={{
                       fontSize:11, padding:"4px 8px", borderRadius:5,
                       border:`1px solid ${sortBy===b.v ? C.accent : C.border}`,
                       background: sortBy===b.v ? C.accentLight : C.surface,
-                      color: sortBy===b.v ? C.accent : C.textSec, cursor:"pointer"
+                      color: sortBy===b.v ? C.accent : C.textSec,
+                      cursor:"pointer",
+                      fontWeight: sortBy===b.v ? 700 : 400,
                     }}>{b.l}</button>
                   ))}
                 </div>
               </div>
-              <div style={{ fontSize:11, color:C.textMuted, marginBottom:8 }}>{filtered.length} meslek listeleniyor</div>
+              <div style={{ fontSize:11, color:C.textMuted, marginBottom:8 }}>
+                {filtered.length} meslek listeleniyor
+                {sortBy === "gap" && <span style={{ color:"#f59e0b", marginLeft:6 }}>· benimseme açığına göre sıralı</span>}
+              </div>
 
               <div style={{ display:"flex", flexDirection:"column", gap:5, maxHeight:"65vh", overflowY:"auto", paddingRight:2 }}>
                 {filtered.map(p => {
                   const risk = getRisk(p.score);
                   const isSel = selected?.id === p.id;
+                  const gap = p.gap !== undefined ? p.gap : +(p.theoretical - p.score).toFixed(1);
                   return (
                     <div key={p.id} onClick={()=>setSel(p)} style={{
                       background: isSel ? risk.bg : C.surface,
@@ -569,12 +870,18 @@ export default function App() {
                     }}>
                       <div style={{ flex:1, minWidth:0 }}>
                         <div style={{ fontWeight:600, fontSize:13, color:C.text, marginBottom:3, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.title}</div>
-                        <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+                        <div style={{ display:"flex", gap:5, alignItems:"center", flexWrap:"wrap" }}>
                           <span style={{ fontSize:10, fontWeight:700, color:risk.c, border:`1px solid ${risk.br}`, background:risk.bg, borderRadius:3, padding:"1px 5px" }}>{risk.label}</span>
+                          {p.nace && <span style={{ fontSize:9, color:C.textMuted, background:"#f1f5f9", border:`1px solid ${C.border}`, borderRadius:3, padding:"1px 5px", fontFamily:"monospace" }}>NACE {p.nace}</span>}
                           <span style={{ fontSize:10, color:C.textMuted, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.sector}</span>
                         </div>
                       </div>
-                      <div style={{ fontSize:16, fontWeight:900, color:risk.c, fontFamily:"monospace", flexShrink:0 }}>{p.score}%</div>
+                      <div style={{ textAlign:"right", flexShrink:0 }}>
+                        <div style={{ fontSize:16, fontWeight:900, color:risk.c, fontFamily:"monospace" }}>{p.score}%</div>
+                        {sortBy === "gap" && (
+                          <div style={{ fontSize:9, color:"#f59e0b", fontFamily:"monospace", fontWeight:700 }}>Δ{gap}%</div>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
@@ -620,7 +927,7 @@ export default function App() {
           </div>
           <div style={{ textAlign:"right" }}>
             <div style={{ fontSize:12, color:"#475569" }}>Kaynak: Massenkoff & McCrory (2026) · Anthropic Economic Index</div>
-            <div style={{ fontSize:12, color:"#334155", marginTop:3 }}>Pilot Demo v2.0 · Mart 2026 · &copy; 2026 Core9Tech</div>
+            <div style={{ fontSize:12, color:"#334155", marginTop:3 }}>Pilot Demo v3.0 · Mart 2026 · &copy; 2026 Core9Tech</div>
           </div>
         </div>
       </footer>
