@@ -110,21 +110,370 @@ function getInstitutionCourses(instName) {
   return plan.topCourses.map(c=>c.course);
 }
 
-// ─── PDF RAPOR ─────────────────────────────────────────────────────────────
+// ─── DEMO VERİ YÜKLE ─────────────────────────────────────────────────────────
+function loadDemoData() {
+  const courses=getInstitutionCourses("BTK");
+  const now=new Date();
+  const daysAgo=(d)=>new Date(now-d*86400000).toISOString();
+  const demoData={
+    "BTK":{
+      hrNote:"BTK pilot eğitim programı Mart 2026 itibarıyla başlatılmıştır. Tüm personelin 6 ay içinde temel AI modüllerini tamamlaması hedeflenmektedir.",
+      customCourses:[],
+      employees:[
+        {id:"emp1",name:"Ayşe Yılmaz",dept:"Yazılım ve Altyapı",addedAt:daysAgo(14),completions:{
+          [courses[0]]:{status:"approved",certRef:"BTK-2026-0142",submittedAt:daysAgo(7)},
+          [courses[1]]:{status:"approved",certRef:"BTK-2026-0155",submittedAt:daysAgo(5)},
+          [courses[2]]:{status:"pending", certRef:"BTK-2026-0189",submittedAt:daysAgo(1)},
+        }},
+        {id:"emp2",name:"Mehmet Demir",dept:"Regülasyon Birimi",addedAt:daysAgo(14),completions:{
+          [courses[0]]:{status:"approved",certRef:"BTK-2026-0143",submittedAt:daysAgo(8)},
+          [courses[1]]:{status:"rejected",certRef:"",submittedAt:daysAgo(6)},
+        }},
+        {id:"emp3",name:"Zeynep Kaya",dept:"Veri Analiz",addedAt:daysAgo(12),completions:{
+          [courses[0]]:{status:"approved",certRef:"BTK-2026-0151",submittedAt:daysAgo(6)},
+          [courses[1]]:{status:"approved",certRef:"BTK-2026-0162",submittedAt:daysAgo(4)},
+          [courses[2]]:{status:"approved",certRef:"BTK-2026-0177",submittedAt:daysAgo(2)},
+          [courses[3]]:{status:"pending", certRef:"BTK-2026-0201",submittedAt:daysAgo(1)},
+        }},
+        {id:"emp4",name:"Ali Çelik",dept:"İdari İşler",addedAt:daysAgo(10),completions:{
+          [courses[0]]:{status:"pending",certRef:"BTK-2026-0198",submittedAt:daysAgo(2)},
+        }},
+        {id:"emp5",name:"Fatma Arslan",dept:"Yazılım ve Altyapı",addedAt:daysAgo(10),completions:{
+          [courses[0]]:{status:"approved",certRef:"BTK-2026-0159",submittedAt:daysAgo(7)},
+          [courses[1]]:{status:"approved",certRef:"BTK-2026-0171",submittedAt:daysAgo(5)},
+          [courses[2]]:{status:"approved",certRef:"BTK-2026-0185",submittedAt:daysAgo(3)},
+          [courses[3]]:{status:"approved",certRef:"BTK-2026-0196",submittedAt:daysAgo(1)},
+        }},
+        {id:"emp6",name:"Hasan Öztürk",dept:"Regülasyon Birimi",addedAt:daysAgo(8),completions:{}},
+        {id:"emp7",name:"Selin Yıldız",dept:"Veri Analiz",addedAt:daysAgo(7),completions:{
+          [courses[0]]:{status:"approved",certRef:"BTK-2026-0167",submittedAt:daysAgo(5)},
+        }},
+        {id:"emp8",name:"Burak Şahin",dept:"İdari İşler",addedAt:daysAgo(6),completions:{
+          [courses[0]]:{status:"approved",certRef:"BTK-2026-0173",submittedAt:daysAgo(4)},
+          [courses[1]]:{status:"pending",certRef:"BTK-2026-0204",submittedAt:daysAgo(0)},
+        }},
+      ],
+    },
+  };
+  saveTD(demoData);
+  return demoData;
+}
+
+
+// ─── PDF RAPOR (GÖRSELLEŞTİRİLMİŞ) ─────────────────────────────────────────
 function generateReport(plan, institutionName) {
-  const top20=[...PROFESSIONS].sort((a,b)=>b.score-a.score).slice(0,20);
+  const top15=[...PROFESSIONS].sort((a,b)=>b.score-a.score).slice(0,15);
   const byScore={h:0,mh:0,m:0,l:0};
   PROFESSIONS.forEach(p=>{ if(p.score>=65)byScore.h++; else if(p.score>=45)byScore.mh++; else if(p.score>=25)byScore.m++; else byScore.l++; });
   const totalAtRisk=PROFESSIONS.filter(p=>p.score>=50).reduce((s,p)=>s+p.workers,0);
-  const html=`<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>TAME 2026 — Türkiye Dijital Beceri Açığı Raporu</title>
-<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,sans-serif;color:#0f172a;background:#fff}.cover{background:#0f2342;color:#fff;padding:60px 48px;min-height:100vh;display:flex;flex-direction:column;justify-content:space-between}.cover h1{font-size:42px;font-weight:900;line-height:1.2;margin:32px 0 16px}.section{padding:40px 48px;border-bottom:1px solid #e2e8f0}.section h2{font-size:22px;font-weight:800;margin-bottom:8px}.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px}.stat-card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px}.stat-card .val{font-size:28px;font-weight:900;font-family:monospace;line-height:1}.stat-card .lbl{font-size:12px;font-weight:600;margin-top:6px;color:#475569}table{width:100%;border-collapse:collapse;margin-top:16px}th{background:#0f2342;color:#fff;padding:10px 14px;font-size:12px;text-align:left}td{padding:9px 14px;font-size:12px;border-bottom:1px solid #e2e8f0}tr:nth-child(even) td{background:#f8fafc}.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700}.badge-h{background:#fef2f2;color:#b91c1c}.badge-mh{background:#fff7ed;color:#c2410c}.badge-m{background:#fffbeb;color:#b45309}.badge-l{background:#f0fdf4;color:#15803d}.policy-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:20px 24px;margin-top:20px}.policy-box h3{font-size:15px;font-weight:800;color:#1d4ed8;margin-bottom:10px}.policy-box p{font-size:13px;color:#1e40af;line-height:1.7}.footer-page{background:#0f2342;color:#475569;padding:20px 48px;font-size:11px;display:flex;justify-content:space-between}@media print{.page-break{page-break-before:always}}</style></head><body>
-<div class="cover"><div><div style="font-size:11px;color:#1d4ed8;letter-spacing:2px;font-weight:700;background:#1e3a5f;display:inline-block;padding:4px 12px;border-radius:4px;border:1px solid #1d4ed8">PİLOT ÇALIŞMA — MART 2026</div><h1>Türkiye Dijital Beceri Açığı Raporu 2026</h1><p style="font-size:16px;color:#94a3b8;line-height:1.7;max-width:600px">Anthropic'in Mart 2026 işgücü araştırması Türkiye NACE Rev.2 ve ISCO-08 standartlarıyla eşleştirildi. Bu rapor ${PROFESSIONS.length} meslek ve 81 il için kanıta dayalı AI maruziyet analizini sunmaktadır.</p>${institutionName?`<p style="color:#93c5fd;margin-top:12px;font-weight:600">Kurum: ${institutionName}</p>`:''}</div><div style="display:flex;justify-content:space-between;align-items:flex-end"><div><div style="font-size:18px;font-weight:900;margin-bottom:4px">TAME</div><div style="font-size:13px;color:#475569">Türkiye AI Maruziyet Endeksi · Core9Tech Teknoloji A.Ş.</div></div><div style="text-align:right;font-size:12px;color:#334155"><div>Kaynak: Anthropic Economic Index</div><div>Massenkoff & McCrory (2026)</div></div></div></div>
-<div class="section"><h2>Yönetici Özeti</h2><div style="font-size:14px;color:#64748b;margin-bottom:24px">Türkiye İşgücünde AI Dönüşümü — Temel Bulgular</div><div class="stats-grid"><div class="stat-card"><div class="val" style="color:#0f172a">${PROFESSIONS.length}</div><div class="lbl">Analiz Edilen Meslek</div></div><div class="stat-card"><div class="val" style="color:#b91c1c">${fmtW(totalAtRisk)}</div><div class="lbl">Yüksek Risk İşgücü</div></div><div class="stat-card"><div class="val" style="color:#c2410c">${byScore.h}</div><div class="lbl">Kritik Meslek</div></div><div class="stat-card"><div class="val" style="color:#1d4ed8">${NAT_AVG}%</div><div class="lbl">Ortalama Maruziyet</div></div></div><div class="policy-box"><h3>Temel Politika Bulgusu</h3><p>Türkiye işgücünün yaklaşık <strong>%${Math.round(PROFESSIONS.filter(p=>p.score>=45).length/PROFESSIONS.length*100)}'i</strong> orta-yüksek veya yüksek AI maruziyet kategorisinde yer almaktadır. BTK Akademi ve İŞKUR programlarının bu mesleklere odaklanması dijital dönüşümü yönetmek için kritik öneme sahiptir.</p></div></div>
-<div class="section page-break"><h2>En Yüksek Riskli 20 Meslek</h2><table><thead><tr><th>#</th><th>Meslek</th><th>ISCO-08</th><th>NACE</th><th>Risk</th><th>Skor</th><th>Teorik</th><th>Açık</th><th>İşgücü</th></tr></thead><tbody>${top20.map((p,i)=>{const risk=getRisk(p.score);const bc=p.score>=65?'badge-h':p.score>=45?'badge-mh':p.score>=25?'badge-m':'badge-l';return`<tr><td style="font-weight:700;color:#94a3b8">${String(i+1).padStart(2,'0')}</td><td style="font-weight:600">${p.title}</td><td style="font-family:monospace;color:#475569">${p.isco}</td><td style="font-family:monospace;color:#475569">${p.nace||'-'}</td><td><span class="badge ${bc}">${risk.label}</span></td><td style="font-family:monospace;font-weight:800;color:#b91c1c">%${p.score}</td><td style="font-family:monospace;color:#475569">%${p.theoretical}</td><td style="font-family:monospace;color:#f59e0b">%${p.gap||+(p.theoretical-p.score).toFixed(1)}</td><td style="font-family:monospace">${fmtW(p.workers)}</td></tr>`;}).join('')}</tbody></table></div>
-${plan?`<div class="section page-break"><h2>Eğitim Planı${institutionName?` — ${institutionName}`:''}</h2><div style="font-size:14px;color:#64748b;margin-bottom:24px">Kuruma özgü AI beceri dönüşüm programı · ${plan.headcount.toLocaleString('tr')} çalışan · ${plan.durationLabel}</div><div class="stats-grid"><div class="stat-card"><div class="val" style="color:#b91c1c">%${plan.avgScore}</div><div class="lbl">Ortalama Risk Skoru</div></div><div class="stat-card"><div class="val" style="color:#1d4ed8">${plan.topCourses.length}</div><div class="lbl">Eğitim Modülü</div></div><div class="stat-card"><div class="val" style="color:#0f172a">${Math.round(plan.totalHoursPerPerson)}</div><div class="lbl">Saat/Kişi</div></div><div class="stat-card"><div class="val" style="color:#15803d">${plan.durationMonths} ay</div><div class="lbl">Program Süresi</div></div></div><table><thead><tr><th>#</th><th>Eğitim Modülü</th><th>Öncelik</th><th>Süre (s)</th><th>Katılımcı</th><th>Kişi-Saat</th></tr></thead><tbody>${plan.topCourses.map((c,i)=>{const cls=c.priority==='Kritik'?'badge-h':c.priority==='Yüksek'?'badge-mh':'badge-m';return`<tr><td style="font-weight:700;color:#94a3b8">${String(i+1).padStart(2,'0')}</td><td style="font-weight:600">${c.course}</td><td><span class="badge ${cls}">${c.priority}</span></td><td style="font-family:monospace;text-align:center">${c.hours}</td><td style="font-family:monospace;text-align:center">${c.participants.toLocaleString('tr')}</td><td style="font-family:monospace;text-align:center">${c.personHours.toLocaleString('tr')}</td></tr>`;}).join('')}<tr style="background:#f8fafc;font-weight:700"><td colspan="4" style="text-align:right;color:#475569">TOPLAM</td><td style="font-family:monospace;text-align:center">${plan.headcount.toLocaleString('tr')}</td><td style="font-family:monospace;text-align:center">${plan.totalPersonHours.toLocaleString('tr')}</td></tr></tbody></table></div>`:''}
-<div class="section page-break"><h2>Bölgesel Maruziyet Analizi</h2><table><thead><tr><th>Sıra</th><th>İl</th><th>Baskın Sektör</th><th>Risk Skoru</th><th>Seviye</th></tr></thead><tbody>${[...PROVINCES].sort((a,b)=>b.score-a.score).slice(0,20).map((p,i)=>{const col=getMapColor(p.score);return`<tr><td style="font-weight:700;color:#94a3b8">${String(i+1).padStart(2,'0')}</td><td style="font-weight:600">${p.name}</td><td style="color:#475569">${p.sector}</td><td style="font-family:monospace;font-weight:800;color:${col.stroke}">%${p.score}</td><td>${p.score>=60?'<span class="badge badge-h">YÜKSEK</span>':p.score>=40?'<span class="badge badge-mh">ORTA-Y.</span>':'<span class="badge badge-m">ORTA</span>'}</td></tr>`;}).join('')}</tbody></table></div>
-<div class="footer-page"><span>TAME — Türkiye AI Maruziyet Endeksi · Core9Tech Teknoloji A.Ş. · Pilot Demo v5.0 · Mart 2026</span><span>core9tech.com</span></div>
-<script>window.onload=()=>window.print();</script></body></html>`;
+  const total=PROFESSIONS.length;
+
+  // SVG: Donut chart segmentleri
+  const segments=[
+    {count:byScore.h, color:"#b91c1c", label:"Yüksek"},
+    {count:byScore.mh,color:"#c2410c", label:"Orta-Y."},
+    {count:byScore.m, color:"#b45309", label:"Orta"},
+    {count:byScore.l, color:"#15803d", label:"Düşük"},
+  ];
+  let cumAngle=-Math.PI/2;
+  const CX=80,CY=80,R=65,IR=40;
+  const donutPaths=segments.map(seg=>{
+    const angle=(seg.count/total)*2*Math.PI;
+    const x1=CX+R*Math.cos(cumAngle),y1=CY+R*Math.sin(cumAngle);
+    cumAngle+=angle;
+    const x2=CX+R*Math.cos(cumAngle),y2=CY+R*Math.sin(cumAngle);
+    const ix1=CX+IR*Math.cos(cumAngle-angle),iy1=CY+IR*Math.sin(cumAngle-angle);
+    const ix2=CX+IR*Math.cos(cumAngle),iy2=CY+IR*Math.sin(cumAngle);
+    const large=angle>Math.PI?1:0;
+    return `<path d="M${x1.toFixed(1)},${y1.toFixed(1)} A${R},${R} 0 ${large},1 ${x2.toFixed(1)},${y2.toFixed(1)} L${ix2.toFixed(1)},${iy2.toFixed(1)} A${IR},${IR} 0 ${large},0 ${ix1.toFixed(1)},${iy1.toFixed(1)} Z" fill="${seg.color}" stroke="white" stroke-width="2"/>`;
+  }).join('');
+
+  // SVG: Top 15 meslek yatay bar
+  const BAR_H=top15.length*28+20;
+  const topBars=top15.map((p,i)=>{
+    const bw=Math.round(p.score/100*340);
+    const color=p.score>=65?"#b91c1c":p.score>=45?"#c2410c":"#b45309";
+    const y=10+i*28;
+    const title=p.title.length>26?p.title.slice(0,25)+"…":p.title;
+    return `<g><text x="0" y="${y+13}" font-size="9.5" fill="#475569">${title}</text><rect x="0" y="${y+15}" width="340" height="8" rx="3" fill="#e2e8f0"/><rect x="0" y="${y+15}" width="${bw}" height="8" rx="3" fill="${color}"/><text x="${bw+4}" y="${y+23}" font-size="9" fill="${color}" font-weight="700">%${p.score}</text></g>`;
+  }).join('');
+
+  // SVG: Top 15 il yatay bar
+  const top15prov=[...PROVINCES].sort((a,b)=>b.score-a.score).slice(0,15);
+  const PROV_H=top15prov.length*22+16;
+  const provBars=top15prov.map((p,i)=>{
+    const bw=Math.round(p.score/100*300);
+    const color=p.score>=60?"#ef4444":p.score>=40?"#f97316":"#d97706";
+    const y=i*22+6;
+    return `<g><text x="0" y="${y+13}" font-size="9.5" fill="#0f172a" font-weight="600">${p.name}</text><rect x="64" y="${y+3}" width="300" height="10" rx="3" fill="#e2e8f0"/><rect x="64" y="${y+3}" width="${bw}" height="10" rx="3" fill="${color}"/><text x="368" y="${y+13}" font-size="9" fill="${color}" font-weight="700">%${p.score}</text></g>`;
+  }).join('');
+
+  // Eğitim Gantt
+  const maxHrs=plan?Math.max(...plan.topCourses.map(c=>c.hours)):1;
+  const ganttBars=plan?plan.topCourses.map((c,i)=>{
+    const bw=Math.round((c.hours/maxHrs)*300);
+    const color=c.priority==="Kritik"?"#b91c1c":c.priority==="Yüksek"?"#c2410c":"#b45309";
+    const y=i*24+6;
+    const title=c.course.length>28?c.course.slice(0,27)+"…":c.course;
+    return `<g><text x="0" y="${y+12}" font-size="9" fill="#475569">${title}</text><rect x="0" y="${y+13}" width="${bw}" height="8" rx="3" fill="${color}" opacity="0.8"/><text x="${bw+4}" y="${y+21}" font-size="8" fill="${color}" font-weight="700">${c.hours}s</text></g>`;
+  }).join(''):'';
+  const GANTT_H=plan?(plan.topCourses.length*24+20):0;
+
+  const theAvgTh=Math.round(PROFESSIONS.reduce((s,p)=>s+p.theoretical,0)/PROFESSIONS.length);
+  const avgGap=Math.round(PROFESSIONS.reduce((s,p)=>s+(p.theoretical-p.score),0)/PROFESSIONS.length);
+
+  const html=`<!DOCTYPE html>
+<html lang="tr"><head><meta charset="UTF-8">
+<title>TAME 2026 — Türkiye Dijital Beceri Açığı Raporu</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#0f172a;background:#fff;font-size:13px}
+.cover{background:linear-gradient(135deg,#0f2342 0%,#1e3a6b 100%);color:#fff;padding:56px 52px;min-height:100vh;display:flex;flex-direction:column;justify-content:space-between}
+.cover h1{font-size:38px;font-weight:900;line-height:1.18;margin:24px 0 12px;letter-spacing:-1.5px;max-width:580px}
+.section{padding:32px 52px;border-bottom:2px solid #f1f5f9}
+.sec-hdr{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.sec-hdr h2{font-size:19px;font-weight:800;color:#0f172a}
+.sec-num{width:30px;height:30px;background:#0f2342;color:white;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:monospace;flex-shrink:0}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.kpi{border-radius:10px;padding:14px 16px;border:1px solid}
+.kpi .num{font-size:26px;font-weight:900;font-family:monospace;line-height:1;margin-bottom:4px}
+.kpi .lbl{font-size:10.5px;font-weight:700}
+.kpi .sub{font-size:9.5px;margin-top:2px;opacity:0.75}
+.kr{background:#fef2f2;border-color:#fecaca}.kr .num,.kr .lbl{color:#b91c1c}
+.ko{background:#fff7ed;border-color:#fed7aa}.ko .num,.ko .lbl{color:#c2410c}
+.kb{background:#eff6ff;border-color:#bfdbfe}.kb .num,.kb .lbl{color:#1d4ed8}
+.kg{background:#f0fdf4;border-color:#bbf7d0}.kg .num,.kg .lbl{color:#15803d}
+.ks{background:#f8fafc;border-color:#e2e8f0}.ks .lbl{color:#475569}
+.cb{background:#f8fafc;border:1px solid #e2e8f0;border-radius:9px;padding:16px 18px}
+.ct{font-size:9.5px;font-weight:700;color:#94a3b8;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.ins{background:#eff6ff;border-left:4px solid #1d4ed8;border-radius:0 8px 8px 0;padding:12px 16px;margin-top:18px}
+.ins h3{font-size:12px;font-weight:800;color:#1d4ed8;margin-bottom:5px}
+.ins p{font-size:11px;color:#1e40af;line-height:1.7;margin:0}
+.dbar{height:12px;border-radius:5px;overflow:hidden;display:flex;margin:8px 0}
+.leg{display:flex;gap:12px;flex-wrap:wrap;font-size:10.5px}
+.li{display:flex;align-items:center;gap:4px}
+.ld{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.cr{display:flex;align-items:center;padding:8px 12px;border-radius:7px;margin-bottom:5px;gap:10px}
+.cn{font-size:10.5px;font-weight:700;font-family:monospace;color:#94a3b8;width:18px;flex-shrink:0}
+.cv{flex:1;min-width:0}
+.cv .ct2{font-size:11.5px;font-weight:700;color:#0f172a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cv .cm{font-size:9.5px;color:#475569;margin-top:1px}
+.cb2{padding:2px 7px;border-radius:3px;font-size:9.5px;font-weight:700;flex-shrink:0}
+.cbk{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
+.cby{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa}
+.cbs{background:#fffbeb;color:#b45309;border:1px solid #fde68a}
+.pt{width:100%;border-collapse:collapse}
+.pt th{background:#0f2342;color:white;padding:7px 11px;font-size:10.5px;text-align:left}
+.pt td{padding:6.5px 11px;font-size:10.5px;border-bottom:1px solid #f1f5f9}
+.pt tr:nth-child(even) td{background:#f8fafc}
+.sp{display:inline-block;padding:2px 7px;border-radius:3px;font-size:9.5px;font-weight:700;font-family:monospace}
+.sph{background:#fef2f2;color:#b91c1c}
+.spm{background:#fff7ed;color:#c2410c}
+.spmo{background:#fffbeb;color:#b45309}
+.spl{background:#f0fdf4;color:#15803d}
+.footer{background:#0f2342;color:#475569;padding:16px 52px;display:flex;justify-content:space-between;font-size:10px}
+@media print{.pb{page-break-before:always}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+</head><body>
+
+<div class="cover">
+  <div>
+    <div style="background:#1e3a5f;color:#93c5fd;font-size:10px;font-weight:700;padding:4px 12px;border-radius:4px;border:1px solid #1d4ed8;letter-spacing:2px;display:inline-block;margin-bottom:8px">PİLOT ÇALIŞMA — MART 2026</div>
+    <h1>Türkiye Dijital Beceri Açığı Raporu 2026</h1>
+    <p style="font-size:14px;color:#94a3b8;line-height:1.75;max-width:560px;margin-bottom:28px">Anthropic'in Mart 2026 işgücü araştırması ${PROFESSIONS.length} meslek ve 81 il düzeyinde Türkiye NACE Rev.2 / ISCO-08 standartlarıyla eşleştirildi.</p>
+    ${institutionName?`<div style="background:rgba(29,78,216,0.22);border:1px solid #1d4ed8;border-radius:9px;padding:12px 16px;display:inline-block"><div style="font-size:9.5px;color:#93c5fd;letter-spacing:1.5px;font-weight:700;margin-bottom:3px">HAZIRLANDIĞI KURUM</div><div style="font-size:18px;font-weight:800;color:white">${institutionName}</div></div>`:""}
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-top:20px;border-top:1px solid rgba(255,255,255,0.08)">
+    <div>
+      <div style="font-size:20px;font-weight:900;color:white">TAME</div>
+      <div style="font-size:11px;color:#475569;margin-top:2px">Türkiye AI Maruziyet Endeksi · Core9Tech Teknoloji A.Ş.</div>
+    </div>
+    <div style="text-align:right;font-size:10.5px;color:#334155">
+      <div>Kaynak: Anthropic Economic Index · Massenkoff & McCrory (2026)</div>
+      <div>core9tech.com · ASBÜ Sosyokent Teknopark, Ankara</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="sec-hdr"><div class="sec-num">01</div><h2>Yönetici Özeti</h2></div>
+  <div class="kpi-row">
+    <div class="kpi ks"><div class="num">${PROFESSIONS.length}</div><div class="lbl">Analiz Edilen Meslek</div><div class="sub">NACE Rev.2 + ISCO-08</div></div>
+    <div class="kpi kr"><div class="num">${fmtW(totalAtRisk)}</div><div class="lbl">Yüksek Risk İşgücü</div><div class="sub">Maruziyet skoru %50+</div></div>
+    <div class="kpi ko"><div class="num">${byScore.h}</div><div class="lbl">Kritik Meslek</div><div class="sub">%65 üzeri otomasyon</div></div>
+    <div class="kpi kb"><div class="num">${NAT_AVG}%</div><div class="lbl">Ulusal Ort. Skor</div><div class="sub">Ağırlıksız ortalama</div></div>
+  </div>
+
+  <div class="two">
+    <div class="cb">
+      <div class="ct">Risk Skor Dağılımı — ${PROFESSIONS.length} Meslek</div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <svg width="160" height="160" viewBox="0 0 160 160" style="flex-shrink:0">
+          ${donutPaths}
+          <text x="80" y="75" text-anchor="middle" font-size="20" font-weight="900" fill="#0f172a" font-family="monospace">${NAT_AVG}%</text>
+          <text x="80" y="89" text-anchor="middle" font-size="8.5" fill="#94a3b8">ORTALAMA</text>
+        </svg>
+        <div style="flex:1">
+          ${segments.map(s=>`<div style="display:flex;align-items:center;gap:7px;margin-bottom:9px">
+            <div style="width:11px;height:11px;border-radius:3px;background:${s.color};flex-shrink:0"></div>
+            <div><div style="font-size:14px;font-weight:800;color:${s.color};font-family:monospace">${s.count}</div><div style="font-size:9.5px;color:#475569">${s.label} (%${Math.round(s.count/total*100)})</div></div>
+          </div>`).join("")}
+        </div>
+      </div>
+    </div>
+    <div class="cb">
+      <div class="ct">Teorik Kapasite vs Gerçek Kullanım</div>
+      <div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;font-size:10.5px;margin-bottom:4px"><span style="color:#475569">Teorik AI Kapasitesi (ort.)</span><span style="color:#1d4ed8;font-weight:700;font-family:monospace">%${theAvgTh}</span></div>
+        <div style="height:10px;background:#e2e8f0;border-radius:4px;overflow:hidden"><div style="height:100%;width:${theAvgTh}%;background:#1d4ed8;border-radius:4px"></div></div>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;font-size:10.5px;margin-bottom:4px"><span style="color:#475569">Gözlemlenen Maruziyet (ort.)</span><span style="color:#b91c1c;font-weight:700;font-family:monospace">%${NAT_AVG}</span></div>
+        <div style="height:10px;background:#e2e8f0;border-radius:4px;overflow:hidden"><div style="height:100%;width:${NAT_AVG}%;background:#b91c1c;border-radius:4px"></div></div>
+      </div>
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:7px;padding:10px 12px">
+        <div style="font-size:10.5px;font-weight:700;color:#b91c1c;margin-bottom:2px">Ort. Benimseme Açığı</div>
+        <div style="font-size:24px;font-weight:900;color:#b91c1c;font-family:monospace">%${avgGap}</div>
+        <div style="font-size:9.5px;color:#b45309;margin-top:2px">Eğitim yatırımı için fırsat penceresi</div>
+      </div>
+    </div>
+  </div>
+  <div class="ins">
+    <h3>Temel Politika Bulgusu</h3>
+    <p>Türkiye işgücünün yaklaşık <strong>%${Math.round(PROFESSIONS.filter(p=>p.score>=45).length/PROFESSIONS.length*100)}'i</strong> orta-yüksek veya yüksek AI maruziyet kategorisinde yer almaktadır. Teorik kapasite ile fiili kullanım arasındaki ortalama açık <strong>%${avgGap} puan</strong>tır. BTK Akademi ve İŞKUR programlarının bu mesleklere odaklanması kritik öneme sahiptir.</p>
+  </div>
+</div>
+
+<div class="section pb">
+  <div class="sec-hdr"><div class="sec-num">02</div><h2>En Riskli 15 Meslek — Görsel Analiz</h2></div>
+  <div class="two">
+    <div class="cb">
+      <div class="ct">Maruziyet Skoru Karşılaştırması</div>
+      <svg width="100%" viewBox="0 0 440 ${BAR_H}" preserveAspectRatio="xMidYMid meet" style="overflow:visible">
+        <g transform="translate(96,0)">${topBars}</g>
+      </svg>
+    </div>
+    <div>
+      ${top15.map((p,i)=>{
+        const spCls=p.score>=65?"sph":p.score>=45?"spm":"spmo";
+        const gap=p.gap||+(p.theoretical-p.score).toFixed(1);
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f1f5f9">
+          <div style="flex:1;min-width:0;margin-right:8px">
+            <div style="font-size:10.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.title}</div>
+            <div style="font-size:9px;color:#94a3b8">${p.sector} · ${fmtW(p.workers)} · Açık:%${gap}</div>
+          </div>
+          <span class="sp ${spCls}">%${p.score}</span>
+        </div>`;
+      }).join("")}
+    </div>
+  </div>
+</div>
+
+<div class="section pb">
+  <div class="sec-hdr"><div class="sec-num">03</div><h2>Bölgesel Maruziyet Analizi</h2></div>
+  <div class="two">
+    <div class="cb">
+      <div class="ct">En Yüksek Riskli 15 İl</div>
+      <svg width="100%" viewBox="0 0 420 ${PROV_H}" preserveAspectRatio="xMidYMid meet">
+        ${provBars}
+      </svg>
+    </div>
+    <div>
+      <table class="pt">
+        <thead><tr><th>#</th><th>İl</th><th>Sektör</th><th>Skor</th></tr></thead>
+        <tbody>
+          ${[...PROVINCES].sort((a,b)=>b.score-a.score).slice(0,15).map((p,i)=>{
+            const sc=p.score>=60?"sph":p.score>=40?"spm":"spmo";
+            return `<tr><td style="color:#94a3b8;font-weight:700">${String(i+1).padStart(2,"0")}</td><td style="font-weight:600">${p.name}</td><td style="color:#475569;font-size:9.5px">${p.sector}</td><td><span class="sp ${sc}">%${p.score}</span></td></tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="ins" style="background:#f0fdf4;border-left-color:#15803d">
+    <h3 style="color:#15803d">Bölgesel Politika Notu</h3>
+    <p style="color:#166534">Batı illeri finans ve BİT sektörlerinin yoğunluğu nedeniyle yüksek maruziyet sergiliyken, Doğu Anadolu illeri daha düşük skorlar göstermektedir. Batıda dönüşüm programları, doğuda temel dijital okuryazarlık programları öncelik kazanmalıdır.</p>
+  </div>
+</div>
+
+${plan?`
+<div class="section pb">
+  <div class="sec-hdr"><div class="sec-num">04</div><h2>Kişiselleştirilmiş Eğitim Planı${institutionName?` — ${institutionName}`:""}</h2></div>
+  <div class="kpi-row">
+    <div class="kpi kr"><div class="num">%${plan.avgScore}</div><div class="lbl">Kurum Risk Skoru</div><div class="sub">${plan.intensity}</div></div>
+    <div class="kpi kb"><div class="num">${plan.topCourses.length}</div><div class="lbl">Eğitim Modülü</div><div class="sub">Risk düzeyine özel</div></div>
+    <div class="kpi ks"><div class="num">${Math.round(plan.totalHoursPerPerson)}s</div><div class="lbl">Kişi Başı Yük</div><div class="sub">${plan.monthlyCapacity}s/ay</div></div>
+    <div class="kpi kg"><div class="num">${plan.durationMonths} ay</div><div class="lbl">Program Süresi</div><div class="sub">${plan.durationLabel.split("—")[1]?.trim()||""}</div></div>
+  </div>
+  <div class="cb" style="margin-bottom:18px">
+    <div class="ct">Kurum Risk Profili</div>
+    <div class="dbar">
+      <div style="width:${plan.normRisk.h}%;background:#b91c1c"></div>
+      <div style="width:${plan.normRisk.mh}%;background:#c2410c"></div>
+      <div style="width:${plan.normRisk.m}%;background:#b45309"></div>
+      <div style="width:${plan.normRisk.l}%;background:#15803d"></div>
+    </div>
+    <div class="leg">
+      <span class="li"><span class="ld" style="background:#b91c1c"></span><strong>%${plan.normRisk.h}</strong> Yüksek</span>
+      <span class="li"><span class="ld" style="background:#c2410c"></span><strong>%${plan.normRisk.mh}</strong> Orta-Y.</span>
+      <span class="li"><span class="ld" style="background:#b45309"></span><strong>%${plan.normRisk.m}</strong> Orta</span>
+      <span class="li"><span class="ld" style="background:#15803d"></span><strong>%${plan.normRisk.l}</strong> Düşük</span>
+    </div>
+  </div>
+  <div class="two">
+    <div>
+      <div class="ct" style="margin-bottom:10px">EĞİTİM MODÜLLERI</div>
+      ${plan.topCourses.map((c,i)=>{
+        const clsCr=c.priority==="Kritik"?"cbk":c.priority==="Yüksek"?"cby":"cbs";
+        const rowBg=c.priority==="Kritik"?"#fef2f2":c.priority==="Yüksek"?"#fff7ed":"#fffbeb";
+        return `<div class="cr" style="background:${rowBg}">
+          <span class="cn">${String(i+1).padStart(2,"0")}</span>
+          <div class="cv"><div class="ct2">${c.course}</div><div class="cm">${c.hours}s × ${c.participants.toLocaleString("tr")} kişi = ${c.personHours.toLocaleString("tr")} kişi-saat</div></div>
+          <span class="cb2 ${clsCr}">${c.priority}</span>
+        </div>`;
+      }).join("")}
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;margin-top:6px;display:flex;justify-content:space-between">
+        <span style="font-size:10.5px;font-weight:700;color:#475569">TOPLAM KİŞİ-SAAT</span>
+        <span style="font-size:10.5px;font-family:monospace;font-weight:700;color:#0f172a">${plan.totalPersonHours.toLocaleString("tr")}</span>
+      </div>
+    </div>
+    <div class="cb">
+      <div class="ct">Eğitim Yükü Dağılımı (Saat/Kurs)</div>
+      <svg width="100%" viewBox="0 0 360 ${GANTT_H}" preserveAspectRatio="xMidYMid meet" style="overflow:visible">
+        <g transform="translate(0,0)">${ganttBars}</g>
+      </svg>
+      <div class="ins" style="margin-top:10px;padding:9px 12px">
+        <h3>Hesap</h3>
+        <p>${plan.topCourses.length} modül × ort. ${Math.round(plan.totalHoursPerPerson/plan.topCourses.length)}s = ${Math.round(plan.totalHoursPerPerson)}s/kişi ÷ ${plan.monthlyCapacity}s/ay = <strong>${plan.durationMonths} ay</strong></p>
+      </div>
+    </div>
+  </div>
+</div>
+`:""}
+
+<div class="section">
+  <div class="sec-hdr"><div class="sec-num">${plan?"05":"04"}</div><h2>Kaynakça</h2></div>
+  <div class="three">
+    ${[
+      {t:"Anthropic Economic Index",d:"Massenkoff & McCrory (2026) · Mart 5, 2026",u:"huggingface.co/datasets/Anthropic/EconomicIndex"},
+      {t:"TÜİK İşgücü Araştırması",d:"2024 Hanehalkı İşgücü Araştırması",u:"tuik.gov.tr"},
+      {t:"ISCO-08 / NACE Rev.2",d:"ILO / EUROSTAT · TÜİK Uyarlaması",u:"ilo.org"},
+    ].map(s=>`<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:11px 13px">
+      <div style="font-size:11px;font-weight:700;margin-bottom:3px">${s.t}</div>
+      <div style="font-size:9.5px;color:#475569;margin-bottom:2px">${s.d}</div>
+      <div style="font-size:9.5px;color:#1d4ed8">${s.u}</div>
+    </div>`).join("")}
+  </div>
+</div>
+
+<div class="footer">
+  <span>TAME — Türkiye AI Maruziyet Endeksi · Core9Tech Teknoloji A.Ş. · Pilot Demo v5.0 · Mart 2026</span>
+  <span>core9tech.com · ASBÜ Sosyokent Teknopark, Ankara</span>
+</div>
+<script>window.onload=()=>window.print();</script>
+</body></html>`;
   return html;
 }
 
@@ -339,11 +688,11 @@ function EducationCalculator() {
           <div style={{marginBottom:16}}>
             <div style={{fontSize:11,fontWeight:700,color:C.textMuted,letterSpacing:1,marginBottom:8}}>HEDEF ÇALIŞAN SAYISI</div>
             <div style={{display:"flex",gap:8,alignItems:"center"}}>
-              <input type="number" value={headcount} min={10} max={100000} step={50} onChange={e=>setHeadcount(parseInt(e.target.value)||100)} style={{flex:1,padding:"9px 12px",border:`1px solid ${C.border}`,borderRadius:8,fontSize:20,fontWeight:700,fontFamily:"monospace",color:C.text}}/>
+              <input type="number" value={headcount} min={10} max={100000} step={10} onChange={e=>setHeadcount(Math.max(10,parseInt(e.target.value)||10))} style={{flex:1,padding:"9px 12px",border:`1px solid ${C.border}`,borderRadius:8,fontSize:20,fontWeight:700,fontFamily:"monospace",color:C.text}}/>
               <span style={{fontSize:13,color:C.textMuted}}>kişi</span>
             </div>
             <div style={{display:"flex",gap:6,marginTop:6}}>
-              {[100,500,1000,5000].map(v=>(<button key={v} onClick={()=>setHeadcount(v)} style={{flex:1,padding:"4px 0",fontSize:11,borderRadius:5,border:`1px solid ${C.border}`,background:headcount===v?C.navBg:"white",color:headcount===v?"white":C.textSec,cursor:"pointer"}}>{v.toLocaleString("tr")}</button>))}
+              {[10,50,100,500,1000,5000].map(v=>(<button key={v} onClick={()=>setHeadcount(v)} style={{flex:1,padding:"4px 0",fontSize:11,borderRadius:5,border:`1px solid ${C.border}`,background:headcount===v?C.navBg:"white",color:headcount===v?"white":C.textSec,cursor:"pointer"}}>{v.toLocaleString("tr")}</button>))}
             </div>
           </div>
           {Object.keys(activeWeights).length>0&&(
@@ -360,6 +709,23 @@ function EducationCalculator() {
           <button onClick={()=>setShowPlan(true)} disabled={Object.keys(activeWeights).length===0} style={{width:"100%",padding:"12px 0",borderRadius:8,border:"none",cursor:Object.keys(activeWeights).length===0?"not-allowed":"pointer",fontSize:14,fontWeight:700,background:Object.keys(activeWeights).length===0?C.border:C.navBg,color:"white",transition:"all 0.15s"}}>
             Kişiselleştirilmiş Plan Oluştur →
           </button>
+
+          {/* Bilgi kutusu */}
+          <div style={{marginTop:14,display:"flex",flexDirection:"column",gap:7}}>
+            {[
+              {icon:"🏛",color:"#1d4ed8",bg:"#eff6ff",br:"#bfdbfe",title:"Kurum İçerikleri",desc:"Bakanlıklar ve firmalar kendi eğitim içeriklerini platforma ekleyebilir. Özel müfredat ve kurum politikasına göre modüller özelleştirilebilir."},
+              {icon:"📚",color:"#7c3aed",bg:"#faf5ff",br:"#e9d5ff",title:"Genel Eğitimler",desc:"Temel AI okuryazarlığı ve dijital dönüşüm içerikleri Core9Tech tarafından hazırlanmış olup tüm kurumlara sunulmaktadır."},
+              {icon:"🎓",color:"#15803d",bg:"#f0fdf4",br:"#bbf7d0",title:"Sertifika",desc:"Her tamamlanan eğitim modülü için dijital sertifika düzenlenir. Sertifikalar Eğitim Takibi sekmesinde yönetici onayından geçerek kayıt altına alınır."},
+            ].map(item=>(
+              <div key={item.title} style={{background:item.bg,border:`1px solid ${item.br}`,borderRadius:8,padding:"9px 12px",display:"flex",gap:10,alignItems:"flex-start"}}>
+                <span style={{fontSize:16,flexShrink:0}}>{item.icon}</span>
+                <div>
+                  <div style={{fontSize:11,fontWeight:700,color:item.color,marginBottom:2}}>{item.title}</div>
+                  <div style={{fontSize:10,color:item.color,lineHeight:1.55,opacity:0.85}}>{item.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div>
@@ -458,6 +824,35 @@ function EducationCalculator() {
                 <span>⬇</span> 2026 Türkiye Dijital Beceri Açığı Raporunu İndir
               </button>
               <div style={{fontSize:10,color:C.textMuted,textAlign:"center",marginTop:4}}>HTML — tarayıcıdan Yazdır → PDF olarak kaydedebilirsiniz</div>
+              {/* Eğitim bilgi notu */}
+              <div style={{marginTop:16,background:"#fefce8",border:"1px solid #fde68a",borderRadius:9,padding:"12px 14px"}}>
+                <div style={{fontSize:10,fontWeight:700,color:"#b45309",letterSpacing:1,marginBottom:8}}>EĞİTİM İÇERİĞİ HAKKINDA</div>
+                <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                  {[{icon:"🏛",text:"Eğitim içerikleri bağlı olunan bakanlık veya kurumun önerileri doğrultusunda güncellenir."},{icon:"🏢",text:"Özel sektör kurumları kendi eğitim içeriklerini platforma ekleyebilir."},{icon:"📚",text:"Genel AI okuryazarlığı eğitimleri Core9Tech tarafından sağlanır."},{icon:"🎓",text:"Her eğitim modülünün tamamlanmasının ardından dijital sertifika verilecektir."}].map(item=>(
+                    <div key={item.icon} style={{display:"flex",gap:8,alignItems:"flex-start"}}>
+                      <span style={{fontSize:14,lineHeight:1.4}}>{item.icon}</span>
+                      <span style={{fontSize:11,color:"#92400e",lineHeight:1.5}}>{item.text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Eğitim bilgi notu */}
+              <div style={{marginTop:16,background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:10,padding:"14px 16px"}}>
+                <div style={{fontSize:10,fontWeight:700,color:C.r4c,letterSpacing:1,marginBottom:8}}>EĞİTİM HAKKINDA</div>
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {[
+                    {icon:"🏛",title:"Kurum / Bakanlık İçerikleri",desc:"Bakanlıklar ve kurum yöneticileri kendi öğrenme yönetim sistemlerindeki içerikleri bu platforma ekleyebilir. Onaylanan içerikler çalışanlara otomatik atanır."},
+                    {icon:"📚",title:"Genel Eğitimler (Core9Tech)",desc:"Temel yapay zeka okuryazarlığı, dijital dönüşüm ve sektörel AI uygulamaları başlıklı standart modüller Core9Tech tarafından sağlanmaktadır."},
+                    {icon:"🎓",title:"Sertifika",desc:"Her tamamlanan eğitim modülü için dijital sertifika düzenlenir. Sertifikalar Eğitim Takibi sekmesinde yönetici onayından geçerek kayıt altına alınır."},
+                  ].map(item=>(
+                    <div key={item.title} style={{display:"flex",gap:10,alignItems:"flex-start"}}>
+                      <span style={{fontSize:16,flexShrink:0,marginTop:1}}>{item.icon}</span>
+                      <div><div style={{fontSize:12,fontWeight:700,color:C.text,marginBottom:2}}>{item.title}</div><div style={{fontSize:11,color:C.textSec,lineHeight:1.6}}>{item.desc}</div></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -642,17 +1037,269 @@ function InstitutionProfile() {
   );
 }
 
+// ─── DEMO VERİSİ (sunum için) ────────────────────────────────────────────────
+const DEMO_INST = "BTK";
+const DEMO_COURSES = getInstitutionCourses(DEMO_INST);
+const DEMO_DATA = (() => {
+  const emps = [
+    {id:"d1",name:"Ayşe Yıldız",dept:"Bilgi İşlem",addedAt:"2026-01-15T09:00:00Z",
+     completions:{
+       [DEMO_COURSES[0]]:{status:"approved",certRef:"BTK-2026-0101",submittedAt:"2026-02-03T10:00:00Z"},
+       [DEMO_COURSES[1]]:{status:"approved",certRef:"BTK-2026-0102",submittedAt:"2026-02-18T10:00:00Z"},
+       [DEMO_COURSES[2]]:{status:"pending",certRef:"BTK-2026-0103",submittedAt:"2026-03-10T10:00:00Z"},
+     }},
+    {id:"d2",name:"Mehmet Kara",dept:"Strateji",addedAt:"2026-01-15T09:00:00Z",
+     completions:{
+       [DEMO_COURSES[0]]:{status:"approved",certRef:"BTK-2026-0201",submittedAt:"2026-02-05T10:00:00Z"},
+       [DEMO_COURSES[2]]:{status:"approved",certRef:"BTK-2026-0202",submittedAt:"2026-02-28T10:00:00Z"},
+     }},
+    {id:"d3",name:"Fatma Demir",dept:"İdari İşler",addedAt:"2026-01-20T09:00:00Z",
+     completions:{
+       [DEMO_COURSES[0]]:{status:"approved",certRef:"BTK-2026-0301",submittedAt:"2026-02-10T10:00:00Z"},
+       [DEMO_COURSES[1]]:{status:"rejected",certRef:"",submittedAt:"2026-02-22T10:00:00Z"},
+     }},
+    {id:"d4",name:"Ali Çelik",dept:"Yazılım Geliştirme",addedAt:"2026-01-20T09:00:00Z",
+     completions:{
+       [DEMO_COURSES[0]]:{status:"approved",certRef:"BTK-2026-0401",submittedAt:"2026-02-08T10:00:00Z"},
+       [DEMO_COURSES[1]]:{status:"approved",certRef:"BTK-2026-0402",submittedAt:"2026-02-19T10:00:00Z"},
+       [DEMO_COURSES[2]]:{status:"approved",certRef:"BTK-2026-0403",submittedAt:"2026-02-27T10:00:00Z"},
+       [DEMO_COURSES[3]]:{status:"pending",certRef:"BTK-2026-0404",submittedAt:"2026-03-12T10:00:00Z"},
+     }},
+    {id:"d5",name:"Selin Şahin",dept:"Hukuk",addedAt:"2026-02-01T09:00:00Z",completions:{}},
+    {id:"d6",name:"Emre Arslan",dept:"Finans",addedAt:"2026-02-01T09:00:00Z",
+     completions:{
+       [DEMO_COURSES[0]]:{status:"pending",certRef:"BTK-2026-0601",submittedAt:"2026-03-14T10:00:00Z"},
+     }},
+  ];
+  return { [DEMO_INST]: { employees: emps } };
+})();
+
+function loadOrDemo() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(TK)||"{}");
+    // Demo verisini stored'da yoksa merge et
+    if (!stored[DEMO_INST]) {
+      return { ...stored, ...DEMO_DATA };
+    }
+    return stored;
+  } catch { return DEMO_DATA; }
+}
+
+// ─── İK PORTALI ─────────────────────────────────────────────────────────────
+function HRPortal() {
+  const [inst,setInst]=useState("");const [customInst,setCustomInst]=useState("");
+  const [td,setTd]=useState(loadOrDemo);const [activeEmp,setActiveEmp]=useState(null);
+  const [newCourse,setNewCourse]=useState("");const [editMode,setEditMode]=useState(null);
+
+  const instKey=inst==="other"?customInst:inst;
+  const refresh=()=>setTd(loadOrDemo());
+
+  const instData=td[instKey];
+  const employees=instData?.employees||[];
+  const courses=getInstitutionCourses(instKey);
+
+  // Yeni çalışan ekle
+  const [newEmpName,setNewEmpName]=useState("");const [newEmpDept,setNewEmpDept]=useState("");
+  const handleAddEmployee=()=>{
+    if(!instKey||!newEmpName.trim())return;
+    const d=loadOrDemo();const ki=d[instKey]||{employees:[]};
+    if(!ki.employees.find(e=>e.name===newEmpName.trim())){
+      ki.employees=[...ki.employees,{id:Date.now().toString(),name:newEmpName.trim(),dept:newEmpDept.trim(),addedAt:new Date().toISOString(),completions:{}}];
+      d[instKey]=ki;saveTD(d);
+    }
+    setNewEmpName("");setNewEmpDept("");refresh();
+  };
+  const handleRemoveEmployee=id=>{
+    const d=loadOrDemo();const ki=d[instKey];if(!ki)return;
+    ki.employees=ki.employees.filter(e=>e.id!==id);saveTD(d);refresh();
+  };
+
+  // Toplu kurs ata / kaldır
+  const handleAssignCourse=courseName=>{
+    const d=loadOrDemo();const ki=d[instKey];if(!ki)return;
+    // Kurs henüz kuruma atanmamışsa "atama" kaydı yok — sadece kurs listesine ekle
+    // Burada kurum bazlı özel kurs listesini localStorage'da tutacağız
+    const customKey=`tame_courses_${instKey}`;
+    let cList=[];try{cList=JSON.parse(localStorage.getItem(customKey)||"[]");}catch{}
+    if(!cList.includes(courseName)){cList=[...cList,courseName];localStorage.setItem(customKey,JSON.stringify(cList));}
+    setNewCourse("");refresh();
+  };
+
+  // Özel kurslar
+  const customCoursesKey=`tame_courses_${instKey}`;
+  let customCourses=[];try{customCourses=JSON.parse(localStorage.getItem(customCoursesKey)||"[]");}catch{}
+  const allCourses=[...new Set([...courses,...customCourses])];
+
+  const totalApproved=employees.reduce((s,e)=>s+Object.values(e.completions||{}).filter(v=>v.status==="approved").length,0);
+  const totalPossible=employees.length*allCourses.length;
+  const completionPct=totalPossible>0?Math.round(totalApproved/totalPossible*100):0;
+
+  const handleResetDemo=()=>{
+    saveTD({ ...loadOrDemo(), [DEMO_INST]: DEMO_DATA[DEMO_INST] });
+    refresh();
+  };
+
+  return (
+    <div>
+      <div style={{background:"#faf5ff",border:"1px solid #e9d5ff",borderRadius:10,padding:"12px 16px",marginBottom:18}}>
+        <div style={{fontSize:11,fontWeight:700,color:"#7c3aed",letterSpacing:1,marginBottom:4}}>İNSAN KAYNAKLARI (İK) PORTALI</div>
+        <p style={{fontSize:13,color:"#4c1d95",lineHeight:1.65,margin:0}}>Personel ekleyip çıkarın, kuruma özel eğitim modülleri tanımlayın ve tüm çalışanların kayıt durumunu yönetin. Yönetici Paneli ile birlikte çalışır.</p>
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,alignItems:"start"}}>
+        {/* Sol: Kurum + personel yönetimi */}
+        <div>
+          <div style={{marginBottom:14}}>
+            <div style={{fontSize:11,fontWeight:700,color:C.textMuted,letterSpacing:1,marginBottom:6}}>KURUM SEÇİMİ</div>
+            <select value={inst} onChange={e=>{setInst(e.target.value);setActiveEmp(null);}} style={{width:"100%",fontSize:13,padding:"9px 10px",border:`1px solid ${C.border}`,borderRadius:8,background:C.surface,color:C.text,cursor:"pointer",marginBottom:inst==="other"?8:0}}>
+              <option value="">— Kurumu seçin —</option>
+              <optgroup label="Kamu">{Object.keys(INSTITUTION_PRESETS).filter(k=>INST_TYPES[k]==="kamu").map(k=><option key={k} value={k}>{k}</option>)}</optgroup>
+              <optgroup label="Özel Sektör">{Object.keys(INSTITUTION_PRESETS).filter(k=>!INST_TYPES[k]).map(k=><option key={k} value={k}>{k}</option>)}</optgroup>
+              <option value="other">Diğer</option>
+            </select>
+            {inst==="other"&&<input type="text" value={customInst} onChange={e=>setCustomInst(e.target.value)} placeholder="Kurum adını girin" style={{width:"100%",padding:"8px 10px",border:`1px solid ${C.border}`,borderRadius:7,fontSize:13,color:C.text,marginTop:6}}/>}
+            {instKey==="BTK"&&(
+              <button onClick={handleResetDemo} style={{marginTop:6,fontSize:10,padding:"4px 10px",borderRadius:4,border:`1px solid #e9d5ff`,background:"#faf5ff",color:"#7c3aed",cursor:"pointer"}}>↺ Demo verisini sıfırla</button>
+            )}
+          </div>
+
+          {instKey&&(<>
+            {/* Özet */}
+            {employees.length>0&&(
+              <div style={{background:"#faf5ff",border:"1px solid #e9d5ff",borderRadius:9,padding:"12px 14px",marginBottom:12}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <div>
+                    <div style={{fontSize:22,fontWeight:900,color:"#7c3aed",fontFamily:"monospace"}}>{completionPct}%</div>
+                    <div style={{fontSize:10,color:"#7c3aed",fontWeight:700}}>Tamamlama Oranı</div>
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontSize:13,fontWeight:700,color:C.text}}>{employees.length} çalışan</div>
+                    <div style={{fontSize:11,color:C.textMuted}}>{allCourses.length} eğitim modülü</div>
+                  </div>
+                </div>
+                <div style={{height:6,background:"#e9d5ff",borderRadius:3,overflow:"hidden",marginTop:8}}>
+                  <div style={{height:"100%",width:`${completionPct}%`,background:"#7c3aed",borderRadius:3}}/>
+                </div>
+              </div>
+            )}
+
+            {/* Yeni çalışan ekle */}
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:11,fontWeight:700,color:C.textMuted,letterSpacing:1,marginBottom:6}}>ÇALIŞAN EKLE</div>
+              <div style={{display:"flex",gap:6,marginBottom:6}}>
+                <input type="text" value={newEmpName} onChange={e=>setNewEmpName(e.target.value)} placeholder="Ad Soyad" style={{flex:2,padding:"7px 10px",border:`1px solid ${C.border}`,borderRadius:6,fontSize:12,color:C.text}}/>
+                <input type="text" value={newEmpDept} onChange={e=>setNewEmpDept(e.target.value)} placeholder="Birim (isteğe bağlı)" style={{flex:2,padding:"7px 10px",border:`1px solid ${C.border}`,borderRadius:6,fontSize:12,color:C.text}}/>
+                <button onClick={handleAddEmployee} disabled={!newEmpName.trim()} style={{padding:"7px 12px",borderRadius:6,border:"none",cursor:newEmpName.trim()?"pointer":"not-allowed",fontSize:12,fontWeight:700,background:newEmpName.trim()?C.navBg:C.border,color:"white",flexShrink:0}}>+ Ekle</button>
+              </div>
+            </div>
+
+            {/* Çalışan listesi */}
+            <div style={{fontSize:11,fontWeight:700,color:C.textMuted,letterSpacing:1,marginBottom:6}}>KAYITLI ÇALIŞANLAR ({employees.length})</div>
+            {employees.length===0?(
+              <div style={{background:C.bg,border:`2px dashed ${C.border}`,borderRadius:8,padding:20,textAlign:"center",fontSize:12,color:C.textMuted}}>Henüz çalışan yok — yukarıdan ekleyin</div>
+            ):(
+              <div style={{display:"flex",flexDirection:"column",gap:5,maxHeight:260,overflowY:"auto"}}>
+                {employees.map(emp=>{
+                  const approved=Object.values(emp.completions||{}).filter(v=>v.status==="approved").length;
+                  const pending=Object.values(emp.completions||{}).filter(v=>v.status==="pending").length;
+                  const isActive=activeEmp===emp.id;
+                  return(
+                    <div key={emp.id} onClick={()=>setActiveEmp(isActive?null:emp.id)} style={{background:isActive?"#faf5ff":C.surface,border:`1px solid ${isActive?"#e9d5ff":C.border}`,borderLeft:`3px solid ${isActive?"#7c3aed":C.border}`,borderRadius:7,padding:"8px 11px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",transition:"all 0.1s"}}>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:12,fontWeight:700,color:C.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{emp.name}</div>
+                        <div style={{fontSize:10,color:C.textMuted}}>{emp.dept||"Birim belirtilmedi"}</div>
+                      </div>
+                      <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                        <span style={{fontSize:10,color:C.r4c,fontWeight:700}}>✅ {approved}</span>
+                        {pending>0&&<span style={{fontSize:10,color:C.r3c,fontWeight:700}}>⏳ {pending}</span>}
+                        <button onClick={e=>{e.stopPropagation();handleRemoveEmployee(emp.id);}} style={{background:"none",border:`1px solid ${C.border}`,borderRadius:4,width:20,height:20,cursor:"pointer",fontSize:12,color:C.textMuted,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>)}
+        </div>
+
+        {/* Sağ: Eğitim modülü yönetimi */}
+        <div>
+          {!instKey?(
+            <div style={{background:C.bg,border:`2px dashed ${C.border}`,borderRadius:10,padding:28,textAlign:"center",minHeight:250,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+              <div style={{fontSize:28,marginBottom:8}}>👔</div>
+              <div style={{fontSize:13,color:C.textMuted}}>Kurumu seçin ve personel ile<br/>eğitim modüllerini yönetin</div>
+            </div>
+          ):(
+            <div>
+              <div style={{fontSize:11,fontWeight:700,color:C.textMuted,letterSpacing:1,marginBottom:8}}>EĞİTİM MODÜLLERİ ({allCourses.length})</div>
+              <div style={{marginBottom:8,display:"flex",gap:6}}>
+                <input type="text" value={newCourse} onChange={e=>setNewCourse(e.target.value)} placeholder="Yeni eğitim modülü ekle..." style={{flex:1,padding:"8px 10px",border:`1px solid #e9d5ff`,borderRadius:7,fontSize:12,color:C.text,background:"#faf5ff"}}/>
+                <button onClick={()=>newCourse.trim()&&handleAssignCourse(newCourse.trim())} style={{padding:"8px 12px",borderRadius:7,border:"none",cursor:"pointer",fontSize:12,fontWeight:700,background:"#7c3aed",color:"white",flexShrink:0}}>+ Ekle</button>
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:5,marginBottom:12,maxHeight:200,overflowY:"auto"}}>
+                {allCourses.map((c,i)=>{
+                  const isCustom=customCourses.includes(c);
+                  const pr=i<2?{c:C.r1c,bg:C.r1bg,br:C.r1br}:i<5?{c:C.r2c,bg:C.r2bg,br:C.r2br}:{c:C.r3c,bg:C.r3bg,br:C.r3br};
+                  return(
+                    <div key={c} style={{background:isCustom?"#faf5ff":pr.bg,border:`1px solid ${isCustom?"#e9d5ff":pr.br}`,borderRadius:6,padding:"7px 11px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <div style={{flex:1,minWidth:0}}>
+                        <span style={{fontSize:12,fontWeight:600,color:C.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"block"}}>{c}</span>
+                        <span style={{fontSize:9,color:isCustom?"#7c3aed":pr.c,marginTop:1,display:"block"}}>{isCustom?"Kuruma özel":"Platform önerisi"}</span>
+                      </div>
+                      {isCustom&&(
+                        <button onClick={()=>{let cl=[];try{cl=JSON.parse(localStorage.getItem(customCoursesKey)||"[]");}catch{}cl=cl.filter(x=>x!==c);localStorage.setItem(customCoursesKey,JSON.stringify(cl));refresh();}} style={{background:"none",border:`1px solid #e9d5ff`,borderRadius:4,width:20,height:20,cursor:"pointer",fontSize:12,color:"#7c3aed",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>×</button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Seçili çalışan detayı */}
+              {activeEmp&&(()=>{
+                const emp=employees.find(e=>e.id===activeEmp);if(!emp)return null;
+                return(
+                  <div style={{background:"#faf5ff",border:"1px solid #e9d5ff",borderRadius:10,padding:"14px 16px"}}>
+                    <div style={{fontSize:11,fontWeight:700,color:"#7c3aed",letterSpacing:1,marginBottom:10}}>{emp.name.toUpperCase()} — EĞİTİM DURUMU</div>
+                    {allCourses.map(c=>{
+                      const comp=emp.completions?.[c];
+                      const s=comp?.status;
+                      return(
+                        <div key={c} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:`1px solid #e9d5ff`}}>
+                          <span style={{fontSize:11,color:C.text,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginRight:8}}>{c}</span>
+                          <span style={{fontSize:12,fontWeight:700,flexShrink:0,color:s==="approved"?C.r4c:s==="pending"?C.r3c:s==="rejected"?C.r1c:C.textMuted}}>
+                            {s==="approved"?"✅ Tamamlandı":s==="pending"?"⏳ Bekliyor":s==="rejected"?"❌ Reddedildi":"— Başlanmadı"}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    {emp.dept&&<div style={{fontSize:10,color:"#7c3aed",marginTop:8}}>Birim: {emp.dept}</div>}
+                  </div>
+                );
+              })()}
+
+              <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:8,padding:"10px 14px",marginTop:10}}>
+                <div style={{fontSize:10,fontWeight:700,color:C.accent,marginBottom:4}}>İK NOTU</div>
+                <p style={{fontSize:11,color:"#1e40af",lineHeight:1.6,margin:0}}>Buradan eklenen eğitim modülleri Çalışan Portalı ve Yönetici Paneli'ne otomatik yansır. Kurum onaylı içerikler <strong>"Kuruma özel"</strong> etiketi alır.</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── EĞİTİM TAKİBİ: ÇALIŞAN PORTALI ─────────────────────────────────────────
 function EmployeePortal() {
   const [step,setStep]=useState(1);const [inst,setInst]=useState("");const [customInst,setCustomInst]=useState("");const [name,setName]=useState("");const [dept,setDept]=useState("");
-  const [td,setTd]=useState(loadTD);const [certRefs,setCertRefs]=useState({});
+  const [td,setTd]=useState(loadOrDemo);const [certRefs,setCertRefs]=useState({});
 
   const instKey=inst==="other"?customInst:inst;
   const courses=getInstitutionCourses(instKey);
 
   const handleRegister=()=>{
     if(!instKey||!name.trim())return;
-    const d=loadTD();const ki=d[instKey]||{employees:[]};
+    const d=loadOrDemo();const ki=d[instKey]||{employees:[]};
     if(!ki.employees.find(e=>e.name===name.trim())){ki.employees=[...ki.employees,{id:Date.now().toString(),name:name.trim(),dept:dept.trim(),addedAt:new Date().toISOString(),completions:{}}];d[instKey]=ki;saveTD(d);}
     setTd(loadTD());setStep(2);
   };
@@ -661,7 +1308,7 @@ function EmployeePortal() {
 
   const handleSubmit=courseName=>{
     const ref=certRefs[courseName]?.trim();
-    const d=loadTD();const ki=d[instKey];if(!ki)return;
+    const d=loadOrDemo();const ki=d[instKey];if(!ki)return;
     const ei=ki.employees.findIndex(e=>e.name===name.trim());if(ei<0)return;
     ki.employees[ei].completions[courseName]={status:"pending",certRef:ref||"Sertifika referansı girilmedi",submittedAt:new Date().toISOString()};
     saveTD(d);setTd(loadTD());
@@ -767,21 +1414,21 @@ function EmployeePortal() {
 
 // ─── EĞİTİM TAKİBİ: YÖNETİCİ PANELİ ─────────────────────────────────────────
 function ManagerDashboard() {
-  const [inst,setInst]=useState("");const [customInst,setCustomInst]=useState("");const [td,setTd]=useState(loadTD);const [filter,setFilter]=useState("all");
+  const [inst,setInst]=useState("");const [customInst,setCustomInst]=useState("");const [td,setTd]=useState(loadOrDemo);const [filter,setFilter]=useState("all");
 
   const instKey=inst==="other"?customInst:inst;
-  const refresh=()=>setTd(loadTD());
+  const refresh=()=>setTd(loadOrDemo());
   const instData=td[instKey];
   const employees=instData?.employees||[];
   const courses=getInstitutionCourses(instKey);
 
   const handleApprove=(empName,courseName)=>{
-    const d=loadTD();const ki=d[instKey];if(!ki)return;
+    const d=loadOrDemo();const ki=d[instKey];if(!ki)return;
     const ei=ki.employees.findIndex(e=>e.name===empName);if(ei<0)return;
     ki.employees[ei].completions[courseName].status="approved";saveTD(d);refresh();
   };
   const handleReject=(empName,courseName)=>{
-    const d=loadTD();const ki=d[instKey];if(!ki)return;
+    const d=loadOrDemo();const ki=d[instKey];if(!ki)return;
     const ei=ki.employees.findIndex(e=>e.name===empName);if(ei<0)return;
     ki.employees[ei].completions[courseName].status="rejected";saveTD(d);refresh();
   };
@@ -927,23 +1574,36 @@ function ManagerDashboard() {
 
 // ─── EĞİTİM TAKİP PORTALI ────────────────────────────────────────────────────
 function TrainingPortal() {
-  const [mode,setMode]=useState("employee");
+  const [mode,setMode]=useState("manager");
   return (
     <div>
       <div style={{marginBottom:18}}>
         <h2 style={{fontSize:20,fontWeight:800,color:C.text,marginBottom:6}}>Eğitim Takip Sistemi</h2>
-        <p style={{fontSize:14,color:C.textSec,lineHeight:1.7}}>Çalışanlar tamamladıkları eğitimleri bildirerek yönetici onayına sunar. Yöneticiler tüm personelin eğitim durumunu gerçek zamanlı takip eder.</p>
+        <p style={{fontSize:14,color:C.textSec,lineHeight:1.7}}>Çalışanlar tamamladıkları eğitimleri bildirerek yönetici onayına sunar. İK personeli çalışan ve kurs listesini yönetir. Yöneticiler tüm tabloyu gerçek zamanlı izler.</p>
       </div>
-      <div style={{display:"flex",gap:8,marginBottom:22}}>
+
+      {/* Demo notu */}
+      <div style={{background:"#fefce8",border:"1px solid #fde68a",borderRadius:9,padding:"10px 14px",marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
+        <span style={{fontSize:16}}>💡</span>
+        <p style={{fontSize:12,color:"#92400e",lineHeight:1.6,margin:0}}>
+          <strong>Sunum Demo'su:</strong> Yönetici Paneli ve İK Portalı <strong>BTK</strong> kurumuna ait örnek verilerle önceden doldurulmuştur. Çalışan Portalı'nda "BTK" seçip bir isim girerek gerçek akışı deneyimleyebilirsiniz.
+        </p>
+      </div>
+
+      <div style={{display:"flex",gap:8,marginBottom:22,flexWrap:"wrap"}}>
         <button onClick={()=>setMode("employee")} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 20px",borderRadius:8,border:`1px solid ${mode==="employee"?C.accent:C.border}`,background:mode==="employee"?C.accentLight:C.surface,color:mode==="employee"?C.accent:C.textSec,cursor:"pointer",fontSize:13,fontWeight:700}}>
           <span style={{fontSize:16}}>👤</span> Çalışan Portalı
         </button>
         <button onClick={()=>setMode("manager")} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 20px",borderRadius:8,border:`1px solid ${mode==="manager"?"#b45309":C.border}`,background:mode==="manager"?"#fffbeb":C.surface,color:mode==="manager"?"#b45309":C.textSec,cursor:"pointer",fontSize:13,fontWeight:700}}>
           <span style={{fontSize:16}}>📊</span> Yönetici Paneli
         </button>
+        <button onClick={()=>setMode("hr")} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 20px",borderRadius:8,border:`1px solid ${mode==="hr"?"#7c3aed":C.border}`,background:mode==="hr"?"#faf5ff":C.surface,color:mode==="hr"?"#7c3aed":C.textSec,cursor:"pointer",fontSize:13,fontWeight:700}}>
+          <span style={{fontSize:16}}>👔</span> İK Portalı
+        </button>
       </div>
       {mode==="employee"&&<EmployeePortal/>}
       {mode==="manager"&&<ManagerDashboard/>}
+      {mode==="hr"&&<HRPortal/>}
     </div>
   );
 }
