@@ -1710,7 +1710,7 @@ function DetailPanel({prof,onModalOpen}) {
   );
 }
 
-// ─── ANKARA ANALİZİ ──────────────────────────────────────────────────────────
+// ─── ANKARA ──────────────────────────────────────────────────────────
 function AnkaraSection() {
   const [activeTab, setActiveTab] = useState("genel");
 
@@ -1753,7 +1753,7 @@ function AnkaraSection() {
           <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:20}}>
             {[
               {val:"5.7M",  label:"Nüfus (2021)",         sub:"Türkiye 2. büyük ili",    c:"#0F2342",bg:"#EFF6FF",br:"#BFDBFE"},
-              {val:"%18.7", label:"Türkiye Nüfusundan Pay",sub:"İst. %19, Ankara %18.7", c:"#1D4ED8",bg:"#EFF6FF",br:"#BFDBFE"},
+              {val:"%18.7", label:"Türkiye Nüfusundan Pay",sub:"İst. %19,  %18.7", c:"#1D4ED8",bg:"#EFF6FF",br:"#BFDBFE"},
               {val:"21",    label:"Üniversite",            sub:"319.407 öğrenci",         c:"#7C3AED",bg:"#FAF5FF",br:"#E9D5FF"},
               {val:"10",    label:"Teknoloji Bölgesi",     sub:"8'i faaliyette",          c:"#15803D",bg:"#F0FDF4",br:"#BBF7D0"},
             ].map(s=>(
@@ -2184,7 +2184,7 @@ export default function App() {
   const sectors=useMemo(()=>["Tümü",...new Set(PROFESSIONS.map(p=>p.sector))].sort((a,b)=>a==="Tümü"?-1:a.localeCompare(b,"tr")),[]);
   const filtered=useMemo(()=>{let list=PROFESSIONS;if(sectorFilter!=="Tümü")list=list.filter(p=>p.sector===sectorFilter);if(search.trim()){const q=search.toLowerCase();list=list.filter(p=>p.title.toLowerCase().includes(q)||p.sector.toLowerCase().includes(q)||p.isco.includes(q)||(p.nace&&p.nace.includes(q)));}return[...list].sort((a,b)=>sortBy==="score"?b.score-a.score:sortBy==="gap"?(b.gap??b.theoretical-b.score)-(a.gap??a.theoretical-a.score):a.title.localeCompare(b.title,"tr"));},[search,sortBy,sectorFilter]);
   const stats=useMemo(()=>({atRisk:PROFESSIONS.filter(p=>p.score>=50).reduce((s,p)=>s+p.workers,0),highRisk:PROFESSIONS.filter(p=>p.score>=65).length,avg:NAT_AVG}),[]);
-  const NAV_TABS=[{id:"analysis",label:"Meslek Analizi"},{id:"matrix",label:"Öncelik Matrisi"},{id:"profile",label:"Kurum Analizi"},{id:"training",label:"Eğitim Planı"},{id:"tracker",label:"Eğitim Takibi"},{id:"map",label:"İl Haritası"},{id:"method",label:"Metodoloji"},{id:"ankara",label:"Ankara Analizi"}];
+  const NAV_TABS=[{id:"analysis",label:"Meslek Analizi"},{id:"matrix",label:"Öncelik Matrisi"},{id:"profile",label:"Kurum Analizi"},{id:"training",label:"Eğitim Planı"},{id:"tracker",label:"Eğitim Takibi"},{id:"map",label:"İl Haritası"},{id:"method",label:"Metodoloji"},{id:"ankara",label:"Ankara"}];
   const heroStats=[{val:String(PROFESSIONS.length),label:"Analiz Edilen Meslek",sub:"NACE Rev.2 + ISCO-08",accent:"white",clickable:false},{val:"81",label:"İl Bazında Veri",sub:"Tüm Türkiye illeri",accent:"white",clickable:false},{val:fmtW(stats.atRisk),label:"Yüksek Risk İşgücü",hint:"tıkla → detaylar",accent:"#fca5a5",clickable:true,onClick:()=>setHeroModal("workforce")},{val:String(stats.highRisk),label:"Kritik Meslek",hint:"tıkla → isimler",accent:"#fdba74",clickable:true,onClick:()=>setHeroModal("critical")},{val:`${stats.avg}%`,label:"Ortalama Skor",hint:"tıkla → hesaplama",accent:"white",clickable:true,onClick:()=>setHeroModal("avg")}];
 
   return(
