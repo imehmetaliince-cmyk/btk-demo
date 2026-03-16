@@ -1820,7 +1820,7 @@ function AnkaraSection() {
         <div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:20}}>
             {[
-              {val:"241 Mrd $",label:"Türkiye GSYİH (2020)",     sub:"Tüm sektörler dahil",  c:"#0F2342",bg:"#EFF6FF",br:"#BFDBFE"},
+              {val:"241 Milyar $",label:"Türkiye GSYİH (2020)",     sub:"Tüm sektörler dahil",  c:"#0F2342",bg:"#EFF6FF",br:"#BFDBFE"},
               {val:"~%11",     label:"Ankara'nın GSYİH Payı",    sub:"Hizmet sektörü ağırlıklı",c:"#1D4ED8",bg:"#EFF6FF",br:"#BFDBFE"},
               {val:"160K",     label:"Gelir V. Mükellefi (2021)", sub:"Yıllık ort. %3.5 artış", c:"#B45309",bg:"#FFFBEB",br:"#FDE68A"},
               {val:"102K",     label:"Kurumlar V. Mükellefi (2021)",sub:"Türkiye'nin %10.4'ü",c:"#B91C1C",bg:"#FEF2F2",br:"#FECACA"},
@@ -1998,8 +1998,8 @@ function AnkaraSection() {
         <div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:20}}>
             {[
-              {val:"9.2 Mrd $",label:"İhracat (2021)",      sub:"Türkiye'nin %4.6'sı · 6. sıra",c:"#15803D",bg:"#F0FDF4",br:"#BBF7D0"},
-              {val:"8.3 Mrd $",label:"İhracat (2019)",      sub:"İlk 5 il içinde",               c:"#1D4ED8",bg:"#EFF6FF",br:"#BFDBFE"},
+              {val:"9.2 Milyar $",label:"İhracat (2021)",      sub:"Türkiye'nin %4.6'sı · 6. sıra",c:"#15803D",bg:"#F0FDF4",br:"#BBF7D0"},
+              {val:"8.3 Milyar $",label:"İhracat (2019)",      sub:"İlk 5 il içinde",               c:"#1D4ED8",bg:"#EFF6FF",br:"#BFDBFE"},
               {val:"%4–5",     label:"Türkiye İhracatındaki Pay",sub:"Yıldan yıla istikrarlı",   c:"#B45309",bg:"#FFFBEB",br:"#FDE68A"},
             ].map(s=>(
               <div key={s.label} style={{background:s.bg,border:`1px solid ${s.br}`,borderRadius:10,padding:"14px 16px"}}>
@@ -2032,9 +2032,9 @@ function AnkaraSection() {
             <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:"14px 16px"}}>
               <div style={{fontSize:11,fontWeight:700,color:C.textMuted,letterSpacing:1,marginBottom:12}}>ANKARA GSYH SEKTÖREL PAY (Hizmetler)</div>
               {[
-                {sek:"Kamu Yön. & Eğitim (Ankara)",val:"44.7 Mrd ₺",pay:41.1,c:"#1D4ED8",note:"Türkiye'nin %41'i"},
-                {sek:"Finans & Sigorta",            val:"28.2 Mrd ₺",pay:11.7,c:"#7C3AED",note:"Türkiye'nin %12'si"},
-                {sek:"Mesleki Hizmetler",           val:"~22 Mrd ₺", pay:19.4,c:"#B45309",note:"Bölgesel GSYH'den"},
+                {sek:"Kamu Yön. & Eğitim (Ankara)",val:"44.7 Milyar ₺",pay:41.1,c:"#1D4ED8",note:"Türkiye'nin %41'i"},
+                {sek:"Finans & Sigorta",            val:"28.2 Milyar ₺",pay:11.7,c:"#7C3AED",note:"Türkiye'nin %12'si"},
+                {sek:"Mesleki Hizmetler",           val:"~22 Milyar ₺", pay:19.4,c:"#B45309",note:"Bölgesel GSYH'den"},
               ].map(d=>(
                 <div key={d.sek} style={{marginBottom:10}}>
                   <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:3}}>
