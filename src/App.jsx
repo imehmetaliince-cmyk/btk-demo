@@ -1710,6 +1710,450 @@ function DetailPanel({prof,onModalOpen}) {
   );
 }
 
+// ─── ANKARA ANALİZİ ──────────────────────────────────────────────────────────
+function AnkaraSection() {
+  const [activeTab, setActiveTab] = useState("genel");
+
+  const tabs = [
+    {id:"genel",    label:"Genel Bakış"},
+    {id:"ekonomi",  label:"Ekonomi"},
+    {id:"isgucu",   label:"İşgücü"},
+    {id:"sanayi",   label:"Sanayi & Teknoloji"},
+    {id:"ticaret",  label:"Dış Ticaret"},
+    {id:"ai",       label:"AI Riski (TAME)"},
+  ];
+
+  return (
+    <div>
+      {/* Başlık */}
+      <div style={{marginBottom:20}}>
+        <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:10}}>
+          <div style={{background:"#0F2342",borderRadius:10,width:48,height:48,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🏛</div>
+          <div>
+            <h2 style={{fontSize:20,fontWeight:800,color:C.text,marginBottom:3}}>Rakamlarla Ankara</h2>
+            <p style={{fontSize:13,color:C.textMuted,margin:0}}>Kaynak: ATO İktisadi ve Hukuki Araştırmalar Müdürlüğü · TÜİK 2021–2022 · TAME 2026 entegrasyonu</p>
+          </div>
+        </div>
+        {/* Alt sekme menüsü */}
+        <div style={{display:"flex",gap:6,flexWrap:"wrap",borderBottom:`2px solid ${C.border}`,paddingBottom:0}}>
+          {tabs.map(t=>(
+            <button key={t.id} onClick={()=>setActiveTab(t.id)} style={{
+              padding:"7px 14px",borderRadius:"6px 6px 0 0",border:`1px solid ${activeTab===t.id?"#1D4ED8":C.border}`,
+              borderBottom:"none",background:activeTab===t.id?"#1D4ED8":C.surface,
+              color:activeTab===t.id?"white":C.textSec,fontSize:12,fontWeight:activeTab===t.id?700:400,
+              cursor:"pointer",transition:"all 0.13s",marginBottom:-2,
+            }}>{t.label}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* GENEL BAKIŞ */}
+      {activeTab==="genel"&&(
+        <div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:20}}>
+            {[
+              {val:"5.7M",  label:"Nüfus (2021)",         sub:"Türkiye 2. büyük ili",    c:"#0F2342",bg:"#EFF6FF",br:"#BFDBFE"},
+              {val:"%18.7", label:"Türkiye Nüfusundan Pay",sub:"İst. %19, Ankara %18.7", c:"#1D4ED8",bg:"#EFF6FF",br:"#BFDBFE"},
+              {val:"21",    label:"Üniversite",            sub:"319.407 öğrenci",         c:"#7C3AED",bg:"#FAF5FF",br:"#E9D5FF"},
+              {val:"10",    label:"Teknoloji Bölgesi",     sub:"8'i faaliyette",          c:"#15803D",bg:"#F0FDF4",br:"#BBF7D0"},
+            ].map(s=>(
+              <div key={s.label} style={{background:s.bg,border:`1px solid ${s.br}`,borderRadius:10,padding:"14px 16px"}}>
+                <div style={{fontSize:28,fontWeight:900,color:s.c,fontFamily:"monospace",lineHeight:1}}>{s.val}</div>
+                <div style={{fontSize:12,fontWeight:700,color:s.c,marginTop:5}}>{s.label}</div>
+                <div style={{fontSize:10,color:C.textMuted,marginTop:2}}>{s.sub}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* İlçe dağılımı */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:16}}>
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:"14px 16px"}}>
+              <div style={{fontSize:11,fontWeight:700,color:C.textMuted,letterSpacing:1,marginBottom:12}}>EN KALABALIK 6 İLÇE (Ankara Nüfusundan Pay)</div>
+              {[
+                {ilce:"Çankaya",   oran:16.52, renk:"#1D4ED8"},
+                {ilce:"Keçiören",  oran:16.41, renk:"#1D4ED8"},
+                {ilce:"Yenimahalle",oran:12.25,renk:"#1D4ED8"},
+                {ilce:"Mamak",     oran:11.87, renk:"#2563EB"},
+                {ilce:"Etimesgut", oran:10.55, renk:"#3B82F6"},
+                {ilce:"Sincan",    oran:9.77,  renk:"#60A5FA"},
+              ].map(d=>(
+                <div key={d.ilce} style={{marginBottom:7}}>
+                  <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:3}}>
+                    <span style={{color:C.text,fontWeight:600}}>{d.ilce}</span>
+                    <span style={{color:d.renk,fontFamily:"monospace",fontWeight:700}}>%{d.oran}</span>
+                  </div>
+                  <div style={{height:5,background:C.bg,borderRadius:3,overflow:"hidden",border:`1px solid ${C.border}`}}>
+                    <div style={{height:"100%",width:`${d.oran/17*100}%`,background:d.renk,borderRadius:3}}/>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:"14px 16px"}}>
+              <div style={{fontSize:11,fontWeight:700,color:C.textMuted,letterSpacing:1,marginBottom:12}}>TEMEL GÖSTERGELER</div>
+              {[
+                ["Nüfus artış hızı (2020–21)","‰14.8 — Türkiye ort. ‰12.7"],
+                ["Cinsiyet dağılımı","Erkek %49.5 · Kadın %50.5"],
+                ["Net göç (2019–20)","+11.997 kişi · Alınan 153K / Verilen 141K"],
+                ["Ankara nüfusuna kayıtlı","Ankara sakinlerinin %71.6'sı"],
+                ["Nüfus yoğunluğu","km² başına ~294 kişi"],
+                ["Yıllık nüfus değişimi (2021)","84.003 kişi net artış"],
+              ].map(([k,v])=>(
+                <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:`1px solid ${C.border}`}}>
+                  <span style={{fontSize:11,color:C.textSec,fontWeight:600}}>{k}</span>
+                  <span style={{fontSize:11,color:C.text,textAlign:"right",maxWidth:"55%"}}>{v}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{background:"#EFF6FF",border:"1px solid #BFDBFE",borderRadius:10,padding:"12px 16px"}}>
+            <div style={{fontSize:10,fontWeight:700,color:"#1D4ED8",letterSpacing:1,marginBottom:6}}>ANKARA & TAME: NEDEN ÖNEMLİ?</div>
+            <p style={{fontSize:13,color:"#1E40AF",lineHeight:1.75,margin:0}}>
+              Ankara, Türkiye işgücünün <strong>%7'sini</strong> barındırmakta ve bu işgücünün <strong>%40'ı nitelikli</strong> (Türkiye ortalaması %28). Finans, kamu yönetimi ve BİT sektörlerinin baskın olduğu Ankara iş dünyası — TAME'nin tanımladığı yüksek AI maruziyet kategorisinde yoğunlaşmaktadır. ATO'nun 160.000+ üye firması bu dönüşümün tam merkezindedir.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* EKONOMİ */}
+      {activeTab==="ekonomi"&&(
+        <div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:20}}>
+            {[
+              {val:"241 Mrd $",label:"Türkiye GSYİH (2020)",     sub:"Tüm sektörler dahil",  c:"#0F2342",bg:"#EFF6FF",br:"#BFDBFE"},
+              {val:"~%11",     label:"Ankara'nın GSYİH Payı",    sub:"Hizmet sektörü ağırlıklı",c:"#1D4ED8",bg:"#EFF6FF",br:"#BFDBFE"},
+              {val:"160K",     label:"Gelir V. Mükellefi (2021)", sub:"Yıllık ort. %3.5 artış", c:"#B45309",bg:"#FFFBEB",br:"#FDE68A"},
+              {val:"102K",     label:"Kurumlar V. Mükellefi (2021)",sub:"Türkiye'nin %10.4'ü",c:"#B91C1C",bg:"#FEF2F2",br:"#FECACA"},
+            ].map(s=>(
+              <div key={s.label} style={{background:s.bg,border:`1px solid ${s.br}`,borderRadius:10,padding:"14px 16px"}}>
+                <div style={{fontSize:24,fontWeight:900,color:s.c,fontFamily:"monospace",lineHeight:1}}>{s.val}</div>
+                <div style={{fontSize:11,fontWeight:700,color:s.c,marginTop:5}}>{s.label}</div>
+                <div style={{fontSize:10,color:C.textMuted,marginTop:2}}>{s.sub}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Sektörel GSYH */}
+          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:"14px 16px",marginBottom:14}}>
+            <div style={{fontSize:11,fontWeight:700,color:C.textMuted,letterSpacing:1,marginBottom:12}}>ANKARA SEKTÖREL GSYH DAĞILIMI (2020)</div>
+            <div style={{display:"flex",flexDirection:"column",gap:7}}>
+              {[
+                {sek:"Kamu Yönetimi, Eğitim, Sağlık ve Sosyal Hizmetler",pay:19.4,c:"#1D4ED8"},
+                {sek:"Finans ve Sigorta Faaliyetleri",                     pay:19.0,c:"#7C3AED"},
+                {sek:"Sanayi",                                              pay:18.9,c:"#B91C1C"},
+                {sek:"Gayrimenkul Faaliyetleri",                            pay:15.1,c:"#C2410C"},
+                {sek:"Mesleki, İdari ve Destek Hizmetleri",                pay:10.4,c:"#B45309"},
+                {sek:"Bilgi ve İletişim",                                   pay:8.2, c:"#15803D"},
+                {sek:"Diğer Hizmetler",                                     pay:8.9, c:"#475569"},
+              ].map(d=>(
+                <div key={d.sek} style={{display:"flex",alignItems:"center",gap:10}}>
+                  <span style={{fontSize:11,color:C.textSec,minWidth:340,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{d.sek}</span>
+                  <div style={{flex:1,height:14,background:C.bg,border:`1px solid ${C.border}`,borderRadius:3,overflow:"hidden"}}>
+                    <div style={{height:"100%",width:`${d.pay/20*100}%`,background:d.c,borderRadius:3}}/>
+                  </div>
+                  <span style={{fontSize:12,fontFamily:"monospace",fontWeight:700,color:d.c,minWidth:40,textAlign:"right"}}>%{d.pay}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{fontSize:10,color:C.textMuted,marginTop:10,fontStyle:"italic"}}>Kaynak: TÜİK Bölgesel GSYH 2009 Bazlı · 2022 verisi</div>
+          </div>
+
+          {/* Kurumlar vergisi trendi */}
+          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:"14px 16px"}}>
+            <div style={{fontSize:11,fontWeight:700,color:C.textMuted,letterSpacing:1,marginBottom:12}}>KURUMLAR VERGİSİ MÜKELLEFİ TRENDI (Ankara)</div>
+            <div style={{display:"flex",alignItems:"flex-end",gap:6,height:80}}>
+              {[
+                {y:"2015",v:77924},{y:"2016",v:80973},{y:"2017",v:84815},{y:"2018",v:88146},{y:"2019",v:91572},{y:"2020",v:97241},{y:"2021",v:102586}
+              ].map((d,i)=>{
+                const maxV=102586, pct=d.v/maxV*100;
+                return (
+                  <div key={d.y} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+                    <span style={{fontSize:9,color:C.textMuted,fontFamily:"monospace"}}>{(d.v/1000).toFixed(0)}K</span>
+                    <div style={{width:"100%",height:`${pct*0.6}px`,background:`hsl(${220-i*10},80%,${45+i*3}%)`,borderRadius:"3px 3px 0 0",minHeight:6}}/>
+                    <span style={{fontSize:9,color:C.textMuted}}>{d.y}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{fontSize:10,color:C.textMuted,marginTop:6,fontStyle:"italic"}}>Kaynak: GİB · Yıllık ortalama artış: %5.5</div>
+          </div>
+        </div>
+      )}
+
+      {/* İŞGÜCÜ */}
+      {activeTab==="isgucu"&&(
+        <div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:20}}>
+            {[
+              {val:"2.2M",  label:"Ankara İşgücü (2020)",   sub:"Türkiye'nin %7'si",       c:"#0F2342",bg:"#EFF6FF",br:"#BFDBFE"},
+              {val:"1.88M", label:"Çalışan Nüfus (2020)",   sub:"İstihdam edilenler",       c:"#1D4ED8",bg:"#EFF6FF",br:"#BFDBFE"},
+              {val:"%40",   label:"Nitelikli İşgücü Payı",  sub:"Türkiye ort. %28",         c:"#7C3AED",bg:"#FAF5FF",br:"#E9D5FF"},
+              {val:"%14.8", label:"İşsizlik Oranı (2020)",  sub:"Türkiye ort. %13.1",       c:"#B91C1C",bg:"#FEF2F2",br:"#FECACA"},
+            ].map(s=>(
+              <div key={s.label} style={{background:s.bg,border:`1px solid ${s.br}`,borderRadius:10,padding:"14px 16px"}}>
+                <div style={{fontSize:26,fontWeight:900,color:s.c,fontFamily:"monospace",lineHeight:1}}>{s.val}</div>
+                <div style={{fontSize:11,fontWeight:700,color:s.c,marginTop:5}}>{s.label}</div>
+                <div style={{fontSize:10,color:C.textMuted,marginTop:2}}>{s.sub}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:"14px 16px"}}>
+              <div style={{fontSize:11,fontWeight:700,color:C.textMuted,letterSpacing:1,marginBottom:12}}>ANKARA İŞGÜCÜ PİYASASI (Bin Kişi)</div>
+              {[
+                {k:"Toplam Nüfus",      v:"5.663",   c:C.text},
+                {k:"İşgücü",           v:"2.207",   c:"#1D4ED8"},
+                {k:"— Çalışan Nüfus",  v:"1.880",   c:"#15803D"},
+                {k:"— İşsiz Nüfus",    v:"327",     c:"#B91C1C"},
+                {k:"İşgücüne Dahil Olmayan",v:"2.182",c:C.textMuted},
+              ].map(r=>(
+                <div key={r.k} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:`1px solid ${C.border}`}}>
+                  <span style={{fontSize:12,color:C.textSec}}>{r.k}</span>
+                  <span style={{fontSize:12,fontFamily:"monospace",fontWeight:700,color:r.c}}>{r.v}</span>
+                </div>
+              ))}
+              <div style={{fontSize:10,color:C.textMuted,marginTop:8,fontStyle:"italic"}}>Kaynak: TÜİK İşgücü İstatistikleri Bölgesel, 2020</div>
+            </div>
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:"14px 16px"}}>
+              <div style={{fontSize:11,fontWeight:700,color:C.textMuted,letterSpacing:1,marginBottom:12}}>EĞİTİM DURUMUNA GÖRE İSTİHDAM</div>
+              {[
+                {eğitim:"Yükseköğrenim",   oran:40, c:"#7C3AED"},
+                {eğitim:"Lise ve dengi",   oran:28, c:"#1D4ED8"},
+                {eğitim:"Ortaokul",        oran:17, c:"#B45309"},
+                {eğitim:"İlkokul",         oran:11, c:"#C2410C"},
+                {eğitim:"Okuma-yazma bilmeyen",oran:4, c:"#B91C1C"},
+              ].map(d=>(
+                <div key={d.eğitim} style={{marginBottom:7}}>
+                  <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
+                    <span style={{color:C.text}}>{d.eğitim}</span>
+                    <span style={{color:d.c,fontFamily:"monospace",fontWeight:700}}>%{d.oran}</span>
+                  </div>
+                  <div style={{height:6,background:C.bg,borderRadius:3,overflow:"hidden",border:`1px solid ${C.border}`}}>
+                    <div style={{height:"100%",width:`${d.oran/42*100}%`,background:d.c,borderRadius:3}}/>
+                  </div>
+                </div>
+              ))}
+              <div style={{fontSize:10,color:C.textMuted,marginTop:8,fontStyle:"italic"}}>Kaynak: TÜİK · Nitelikli işgücü payı Türkiye ort. 1.4× üzerinde</div>
+            </div>
+          </div>
+
+          <div style={{background:"#FAF5FF",border:"1px solid #E9D5FF",borderRadius:10,padding:"12px 16px"}}>
+            <div style={{fontSize:10,fontWeight:700,color:"#7C3AED",letterSpacing:1,marginBottom:6}}>TAME BAĞLANTISI</div>
+            <p style={{fontSize:13,color:"#4C1D95",lineHeight:1.75,margin:0}}>
+              Ankara'nın <strong>nitelikli işgücü yoğunluğu</strong> (%40 yükseköğrenim), kentin AI maruziyetini Türkiye ortalamasının üzerine taşımaktadır. Bilişim (%48–75), finans (%55–70) ve kamu hizmetleri (%35–50) alanlarında çalışan bu nitelikli işgücü, TAME'nin tanımladığı yeniden becerilendirme hedef kitlesinin tam merkezindedir.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* SANAYİ & TEKNOLOJİ */}
+      {activeTab==="sanayi"&&(
+        <div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:20}}>
+            {[
+              {val:"8",    label:"Faaliyetteki TGB",     sub:"10 TGB'nin 8'i aktif",      c:"#15803D",bg:"#F0FDF4",br:"#BBF7D0"},
+              {val:"13",   label:"OSB Sayısı",           sub:"Türkiye'nin %5'i",          c:"#1D4ED8",bg:"#EFF6FF",br:"#BFDBFE"},
+              {val:"6.37B$",label:"Savunma San. İhracatı",sub:"Türkiye ihracatının %72'si",c:"#B91C1C",bg:"#FEF2F2",br:"#FECACA"},
+              {val:"46",   label:"Savunma San. Firma",  sub:"Türkiye'nin %46'sı Ankara",  c:"#C2410C",bg:"#FFF7ED",br:"#FED7AA"},
+            ].map(s=>(
+              <div key={s.label} style={{background:s.bg,border:`1px solid ${s.br}`,borderRadius:10,padding:"14px 16px"}}>
+                <div style={{fontSize:24,fontWeight:900,color:s.c,fontFamily:"monospace",lineHeight:1}}>{s.val}</div>
+                <div style={{fontSize:11,fontWeight:700,color:s.c,marginTop:5}}>{s.label}</div>
+                <div style={{fontSize:10,color:C.textMuted,marginTop:2}}>{s.sub}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* TGB Listesi */}
+          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:"14px 16px",marginBottom:14}}>
+            <div style={{fontSize:11,fontWeight:700,color:C.textMuted,letterSpacing:1,marginBottom:12}}>ANKARA TEKNOLOJİ GELİŞTİRME BÖLGELERİ</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
+              {[
+                {ad:"ODTÜ Teknokent",         univ:"Orta Doğu Teknik Üniversitesi",kuruluş:"2001",durum:"Faaliyette"},
+                {ad:"Bilkent TGB",            univ:"Bilkent Üniversitesi",          kuruluş:"2002",durum:"Faaliyette"},
+                {ad:"Hacettepe TGB",          univ:"Hacettepe Üniversitesi",        kuruluş:"2003",durum:"Faaliyette"},
+                {ad:"Ankara Üniversitesi TGB",univ:"Ankara Üniversitesi",           kuruluş:"2006",durum:"Faaliyette"},
+                {ad:"Gazi Teknopark",         univ:"Gazi Üniversitesi",             kuruluş:"2007",durum:"Faaliyette"},
+                {ad:"ASO Teknopark (TOBB ETÜ)",univ:"TOBB Ekonomi Üniversitesi",   kuruluş:"2008",durum:"Faaliyette"},
+                {ad:"Ankara Teknopark (YBÜ)", univ:"Yıldırım Beyazıt Üniversitesi",kuruluş:"2014",durum:"Faaliyette"},
+                {ad:"OSTİM Ekopark",          univ:"Çok Ortaklı",                  kuruluş:"2014",durum:"Faaliyette"},
+                {ad:"TeknoHAB (Gazi)",        univ:"Gazi Üniversitesi",             kuruluş:"2018",durum:"Altyapı devam"},
+                {ad:"ASBÜ Sosyal İnovasyon",  univ:"Ankara Sosyal Bilimler Üniv.",  kuruluş:"2019",durum:"Altyapı devam"},
+              ].map(t=>(
+                <div key={t.ad} style={{background:t.durum==="Faaliyette"?"#F0FDF4":"#FFFBEB",border:`1px solid ${t.durum==="Faaliyette"?"#BBF7D0":"#FDE68A"}`,borderLeft:`3px solid ${t.durum==="Faaliyette"?"#15803D":"#B45309"}`,borderRadius:7,padding:"8px 11px"}}>
+                  <div style={{fontSize:12,fontWeight:700,color:C.text}}>{t.ad}</div>
+                  <div style={{fontSize:10,color:C.textMuted,marginTop:1}}>{t.univ} · {t.kuruluş}</div>
+                  <div style={{fontSize:10,fontWeight:700,color:t.durum==="Faaliyette"?"#15803D":"#B45309",marginTop:3}}>{t.durum}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{fontSize:10,color:C.textMuted,marginTop:10,fontStyle:"italic"}}>Kaynak: Sanayi ve Teknoloji Bakanlığı Ar-Ge Teşvikleri Genel Müdürlüğü, 2021 · ASBÜ Core9Tech'in ev sahibidir</div>
+          </div>
+        </div>
+      )}
+
+      {/* DIŞ TİCARET */}
+      {activeTab==="ticaret"&&(
+        <div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:20}}>
+            {[
+              {val:"9.2 Mrd $",label:"İhracat (2021)",      sub:"Türkiye'nin %4.6'sı · 6. sıra",c:"#15803D",bg:"#F0FDF4",br:"#BBF7D0"},
+              {val:"8.3 Mrd $",label:"İhracat (2019)",      sub:"İlk 5 il içinde",               c:"#1D4ED8",bg:"#EFF6FF",br:"#BFDBFE"},
+              {val:"%4–5",     label:"Türkiye İhracatındaki Pay",sub:"Yıldan yıla istikrarlı",   c:"#B45309",bg:"#FFFBEB",br:"#FDE68A"},
+            ].map(s=>(
+              <div key={s.label} style={{background:s.bg,border:`1px solid ${s.br}`,borderRadius:10,padding:"14px 16px"}}>
+                <div style={{fontSize:26,fontWeight:900,color:s.c,fontFamily:"monospace",lineHeight:1}}>{s.val}</div>
+                <div style={{fontSize:12,fontWeight:700,color:s.c,marginTop:5}}>{s.label}</div>
+                <div style={{fontSize:10,color:C.textMuted,marginTop:2}}>{s.sub}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:"14px 16px"}}>
+              <div style={{fontSize:11,fontWeight:700,color:C.textMuted,letterSpacing:1,marginBottom:12}}>İHRACAT TRENDI (Milyar $)</div>
+              <div style={{display:"flex",alignItems:"flex-end",gap:8,height:80}}>
+                {[{y:"2019",v:8.3},{y:"2020",v:7.7},{y:"2021",v:9.2}].map((d,i)=>{
+                  const pct=d.v/10*100;
+                  return (
+                    <div key={d.y} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+                      <span style={{fontSize:10,fontWeight:700,color:"#15803D"}}>{d.v}B$</span>
+                      <div style={{width:"100%",height:`${pct*0.65}px`,background:["#86EFAC","#4ADE80","#16A34A"][i],borderRadius:"4px 4px 0 0"}}/>
+                      <span style={{fontSize:10,color:C.textMuted}}>{d.y}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{marginTop:10,background:"#F0FDF4",border:"1px solid #BBF7D0",borderRadius:6,padding:"6px 10px"}}>
+                <div style={{fontSize:11,color:"#15803D"}}>2021'de ihracat <strong>%20 artış</strong> gösterdi. Savunma sanayii ihracatı bu artışın temel motoru.</div>
+              </div>
+            </div>
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:"14px 16px"}}>
+              <div style={{fontSize:11,fontWeight:700,color:C.textMuted,letterSpacing:1,marginBottom:12}}>ANKARA GSYH SEKTÖREL PAY (Hizmetler)</div>
+              {[
+                {sek:"Kamu Yön. & Eğitim (Ankara)",val:"44.7 Mrd ₺",pay:41.1,c:"#1D4ED8",note:"Türkiye'nin %41'i"},
+                {sek:"Finans & Sigorta",            val:"28.2 Mrd ₺",pay:11.7,c:"#7C3AED",note:"Türkiye'nin %12'si"},
+                {sek:"Mesleki Hizmetler",           val:"~22 Mrd ₺", pay:19.4,c:"#B45309",note:"Bölgesel GSYH'den"},
+              ].map(d=>(
+                <div key={d.sek} style={{marginBottom:10}}>
+                  <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:3}}>
+                    <span style={{color:C.text,fontWeight:600,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginRight:8}}>{d.sek}</span>
+                    <span style={{color:d.c,fontFamily:"monospace",fontWeight:700,flexShrink:0}}>{d.val}</span>
+                  </div>
+                  <div style={{height:6,background:C.bg,borderRadius:3,overflow:"hidden",border:`1px solid ${C.border}`}}>
+                    <div style={{height:"100%",width:`${d.pay/42*100}%`,background:d.c,borderRadius:3}}/>
+                  </div>
+                  <div style={{fontSize:9,color:C.textMuted,marginTop:1}}>{d.note}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{background:"#F0FDF4",border:"1px solid #BBF7D0",borderRadius:10,padding:"12px 16px"}}>
+            <div style={{fontSize:10,fontWeight:700,color:"#15803D",letterSpacing:1,marginBottom:6}}>SAVUNMA SANAYİİ — ÖZEL NOT</div>
+            <p style={{fontSize:13,color:"#14532D",lineHeight:1.75,margin:0}}>
+              Ankara, Türkiye savunma sanayii ihracatının <strong>%72'sini</strong> gerçekleştiriyor. 46 savunma firmasıyla Türkiye'nin savunma merkezi konumunda. Bu firmalar aynı zamanda Ankara'nın en yüksek maaşlı teknik işgücünü barındırmakta — TAME'de tanımladığımız <strong>yüksek nitelik × yüksek AI maruziyeti</strong> kategorisinin tipik örneği.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* AI RİSKİ */}
+      {activeTab==="ai"&&(
+        <div>
+          <div style={{background:"#0F2342",borderRadius:12,padding:"20px 24px",marginBottom:18}}>
+            <div style={{fontSize:11,color:"#93C5FD",letterSpacing:1,marginBottom:8}}>ANKARA × TAME ENTEGRASYON ANALİZİ</div>
+            <div style={{display:"flex",alignItems:"baseline",gap:12}}>
+              <div style={{fontSize:48,fontWeight:900,color:"#FCA5A5",fontFamily:"monospace",lineHeight:1}}>%58</div>
+              <div>
+                <div style={{fontSize:15,fontWeight:700,color:"#FCA5A5"}}>Ankara Ortalama AI Maruziyet Skoru (TAME)</div>
+                <div style={{fontSize:12,color:"#94A3B8",marginTop:3}}>Türkiye ortalaması %{NAT_AVG} — Ankara bu ortalamanın <strong style={{color:"#FCA5A5"}}>{Math.round(58/NAT_AVG*10)/10}×</strong> üzerinde</div>
+              </div>
+            </div>
+            <div style={{height:8,background:"#1E3A6B",borderRadius:4,overflow:"hidden",marginTop:12,marginBottom:6}}>
+              <div style={{height:"100%",width:"58%",background:"#EF4444",borderRadius:4}}/>
+            </div>
+            <div style={{fontSize:11,color:"#64748B"}}>TAME platformunda İl Haritası sekmesinden Ankara'ya geçerek canlı skoru görüntüleyebilirsiniz.</div>
+          </div>
+
+          {/* Sektör bazlı AI riski */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:"14px 16px"}}>
+              <div style={{fontSize:11,fontWeight:700,color:C.textMuted,letterSpacing:1,marginBottom:12}}>ANKARA'NIN BASKИН SEKTÖRLERİ — AI RİSK SKORU</div>
+              {[
+                {sek:"Finans & Sigorta",        skor:62, c:"#B91C1C",bg:"#FEF2F2",note:"5.9M+ riskli işgücüne katkı"},
+                {sek:"Bilgi ve İletişim",       skor:58, c:"#C2410C",bg:"#FFF7ED",note:"Yazılım geliştirici yoğun"},
+                {sek:"Kamu Yönetimi",           skor:44, c:"#B45309",bg:"#FFFBEB",note:"e-devlet dönüşümü hızlanıyor"},
+                {sek:"Hukuk & Danışmanlık",     skor:52, c:"#C2410C",bg:"#FFF7ED",note:"ATO üye kitlesinde kritik"},
+                {sek:"Savunma Sanayii",         skor:38, c:"#B45309",bg:"#FFFBEB",note:"Mühendislik korunaklı alan"},
+                {sek:"Tarım (çevre ilçeler)",   skor:18, c:"#15803D",bg:"#F0FDF4",note:"Düşük risk, dijital açık var"},
+              ].map(d=>(
+                <div key={d.sek} style={{background:d.bg,border:`1px solid ${d.c}33`,borderLeft:`3px solid ${d.c}`,borderRadius:7,padding:"8px 11px",marginBottom:6}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <span style={{fontSize:12,fontWeight:600,color:C.text}}>{d.sek}</span>
+                    <span style={{fontSize:15,fontWeight:900,color:d.c,fontFamily:"monospace"}}>%{d.skor}</span>
+                  </div>
+                  <div style={{height:4,background:`${d.c}22`,borderRadius:2,overflow:"hidden",marginTop:5}}>
+                    <div style={{height:"100%",width:`${d.skor}%`,background:d.c,borderRadius:2}}/>
+                  </div>
+                  <div style={{fontSize:9,color:C.textMuted,marginTop:3,fontStyle:"italic"}}>{d.note}</div>
+                </div>
+              ))}
+            </div>
+            <div>
+              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:"14px 16px",marginBottom:12}}>
+                <div style={{fontSize:11,fontWeight:700,color:C.textMuted,letterSpacing:1,marginBottom:10}}>ATO ÜYELERİ İÇİN ÖNCELIK SIRALAMASI</div>
+                {[
+                  {s:"1",label:"Finans & Sigortacılık",note:"Acil müdahale — yüksek risk + geniş kitle",c:"#B91C1C",bg:"#FEF2F2"},
+                  {s:"2",label:"BİT / Yazılım",       note:"Stratejik — yüksek risk + niş kitle",    c:"#C2410C",bg:"#FFF7ED"},
+                  {s:"3",label:"Hukuk & Danışmanlık", note:"Orta-yüksek — hızlı dönüşüm",            c:"#B45309",bg:"#FFFBEB"},
+                  {s:"4",label:"Kamu & İdari Hiz.",   note:"Orta — e-devlet ivmesiyle artacak",       c:"#B45309",bg:"#FFFBEB"},
+                ].map(r=>(
+                  <div key={r.s} style={{display:"flex",alignItems:"flex-start",gap:10,marginBottom:8}}>
+                    <div style={{width:24,height:24,borderRadius:6,background:r.c,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{r.s}</div>
+                    <div style={{background:r.bg,borderRadius:6,padding:"5px 9px",flex:1}}>
+                      <div style={{fontSize:12,fontWeight:700,color:C.text}}>{r.label}</div>
+                      <div style={{fontSize:10,color:C.textMuted,marginTop:1}}>{r.note}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{background:"#EFF6FF",border:"1px solid #BFDBFE",borderRadius:10,padding:"12px 14px"}}>
+                <div style={{fontSize:10,fontWeight:700,color:"#1D4ED8",letterSpacing:1,marginBottom:6}}>HIZLI AKSİYON</div>
+                <p style={{fontSize:12,color:"#1E40AF",lineHeight:1.7,margin:0}}>
+                  TAME'de <strong>Kurum Analizi</strong> sekmesine gidin → <strong>pozisyonlarınızı</strong> ekleyin → kurumunuza özgü AI risk puanınızı ve öncelikli eğitim planını anında görün.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div style={{background:"#0F2342",borderRadius:10,padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+            <div>
+              <div style={{fontSize:13,fontWeight:700,color:"white",marginBottom:3}}>Ankara İşgücü Neden Öncelikli?</div>
+              <div style={{fontSize:12,color:"#94A3B8"}}>5.7M nüfus · %40 nitelikli işgücü · 160K+ vergi mükellefi · 10 TGB · Türkiye'nin başkenti</div>
+            </div>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+              {[
+                {val:"2.2M",label:"İşgücü",c:"#93C5FD"},
+                {val:"%40",label:"Nitelikli",c:"#86EFAC"},
+                {val:"10",label:"TGB",c:"#FDE68A"},
+                {val:"%58",label:"AI Riski",c:"#FCA5A5"},
+              ].map(s=>(
+                <div key={s.label} style={{background:"rgba(255,255,255,0.08)",borderRadius:8,padding:"8px 14px",textAlign:"center"}}>
+                  <div style={{fontSize:18,fontWeight:900,color:s.c,fontFamily:"monospace"}}>{s.val}</div>
+                  <div style={{fontSize:10,color:"#94A3B8"}}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 // ─── METODOLOJİ ──────────────────────────────────────────────────────────────
 function MethodSection({onModalOpen}) {
   return(
@@ -1740,7 +2184,7 @@ export default function App() {
   const sectors=useMemo(()=>["Tümü",...new Set(PROFESSIONS.map(p=>p.sector))].sort((a,b)=>a==="Tümü"?-1:a.localeCompare(b,"tr")),[]);
   const filtered=useMemo(()=>{let list=PROFESSIONS;if(sectorFilter!=="Tümü")list=list.filter(p=>p.sector===sectorFilter);if(search.trim()){const q=search.toLowerCase();list=list.filter(p=>p.title.toLowerCase().includes(q)||p.sector.toLowerCase().includes(q)||p.isco.includes(q)||(p.nace&&p.nace.includes(q)));}return[...list].sort((a,b)=>sortBy==="score"?b.score-a.score:sortBy==="gap"?(b.gap??b.theoretical-b.score)-(a.gap??a.theoretical-a.score):a.title.localeCompare(b.title,"tr"));},[search,sortBy,sectorFilter]);
   const stats=useMemo(()=>({atRisk:PROFESSIONS.filter(p=>p.score>=50).reduce((s,p)=>s+p.workers,0),highRisk:PROFESSIONS.filter(p=>p.score>=65).length,avg:NAT_AVG}),[]);
-  const NAV_TABS=[{id:"analysis",label:"Meslek Analizi"},{id:"matrix",label:"Öncelik Matrisi"},{id:"profile",label:"Kurum Analizi"},{id:"training",label:"Eğitim Planı"},{id:"tracker",label:"Eğitim Takibi"},{id:"map",label:"İl Haritası"},{id:"method",label:"Metodoloji"}];
+  const NAV_TABS=[{id:"analysis",label:"Meslek Analizi"},{id:"matrix",label:"Öncelik Matrisi"},{id:"profile",label:"Kurum Analizi"},{id:"training",label:"Eğitim Planı"},{id:"tracker",label:"Eğitim Takibi"},{id:"map",label:"İl Haritası"},{id:"method",label:"Metodoloji"},{id:"ankara",label:"Ankara Analizi"}];
   const heroStats=[{val:String(PROFESSIONS.length),label:"Analiz Edilen Meslek",sub:"NACE Rev.2 + ISCO-08",accent:"white",clickable:false},{val:"81",label:"İl Bazında Veri",sub:"Tüm Türkiye illeri",accent:"white",clickable:false},{val:fmtW(stats.atRisk),label:"Yüksek Risk İşgücü",hint:"tıkla → detaylar",accent:"#fca5a5",clickable:true,onClick:()=>setHeroModal("workforce")},{val:String(stats.highRisk),label:"Kritik Meslek",hint:"tıkla → isimler",accent:"#fdba74",clickable:true,onClick:()=>setHeroModal("critical")},{val:`${stats.avg}%`,label:"Ortalama Skor",hint:"tıkla → hesaplama",accent:"white",clickable:true,onClick:()=>setHeroModal("avg")}];
 
   return(
@@ -1826,6 +2270,7 @@ export default function App() {
           </div>
         )}
         {tab==="method"&&<MethodSection onModalOpen={()=>setModal(true)}/>}
+        {tab==="ankara"&&<AnkaraSection/>}
       </div>
 
       <footer style={{background:C.navBg,borderTop:"1px solid #1a3a6b",padding:"20px 24px"}}>
